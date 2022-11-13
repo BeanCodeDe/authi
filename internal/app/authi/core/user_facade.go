@@ -15,15 +15,23 @@ type (
 		CreatedOn time.Time
 		LastLogin time.Time
 	}
+
+	User interface {
+		Create() error
+		Login() (*TokenCore, error)
+		GetId() uuid.UUID
+		GetCreatedOn() time.Time
+		GetLastLogin() time.Time
+	}
 )
 
-func (user *UserCore) Create() (err error) {
+func (user *UserCore) Create() error {
 
 	creationTime := time.Now()
 	user.CreatedOn = creationTime
 	user.LastLogin = creationTime
 
-	if err = user.mapToUserDB().Create(); err != nil {
+	if err := user.mapToUserDB().Create(); err != nil {
 		return err
 	}
 
@@ -37,6 +45,18 @@ func (user *UserCore) Login() (*TokenCore, error) {
 		return nil, fmt.Errorf("something went wrong when logging in user, %v", user.ID)
 	}
 	return createJWTToken(user.ID)
+}
+
+func (user *UserCore) GetId() uuid.UUID {
+	return user.ID
+}
+
+func (user *UserCore) GetCreatedOn() time.Time {
+	return user.CreatedOn
+}
+
+func (user *UserCore) GetLastLogin() time.Time {
+	return user.LastLogin
 }
 
 func (user *UserCore) mapToUserDB() *db.UserDB {

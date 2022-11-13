@@ -12,6 +12,8 @@ import (
 
 const AuthRootPath = "/auth"
 
+var authFacade core.AuthFacade
+
 type tokenResponseDTO struct {
 	AccessToken      string `json:"access_token"`
 	ExpiresIn        int    `json:"expires_in"`
@@ -20,6 +22,10 @@ type tokenResponseDTO struct {
 }
 
 func InitAuthInterface(group *echo.Group) {
+	authFacade = &core.AuthFacadeImpl{}
+	test := &core.AuthFacadeImpl{}
+	test.Init()
+	authFacade.Init()
 	group.PATCH("/refresh", refreshToken)
 	group.GET("/login", login)
 }
@@ -34,7 +40,7 @@ func refreshToken(context echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 
-	token, err := core.CreateJWTTokenFromRefreshToken(claims.UserId, refreshToken)
+	token, err := authFacade.CreateJWTTokenFromRefreshToken(claims.UserId, refreshToken)
 	if err != nil {
 		log.Errorf("Something went wrong while creating Token: %v", err)
 		return echo.ErrUnauthorized
@@ -57,7 +63,7 @@ func login(context echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 
-	log.Debugf("Logged in user %s", userCore.ID)
+	log.Debugf("Logged in user %s", userCore.GetId())
 	return context.JSON(http.StatusOK, mapToTokenResponseDTO(tokenCore))
 }
 

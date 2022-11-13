@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/BeanCodeDe/authi/internal/app/authi/api"
 	"github.com/BeanCodeDe/authi/internal/app/authi/config"
-	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
@@ -24,7 +23,6 @@ func main() {
 	setLogLevel(config.LogLevel)
 	log.Info("Start Server")
 	db.Init()
-	core.Init()
 	e := echo.New()
 	e.HTTPErrorHandler = api.CustomHTTPErrorHandler
 	e.Validator = &CustomValidator{validator: validator.New()}

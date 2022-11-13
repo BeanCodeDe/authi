@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
@@ -17,7 +16,7 @@ const UserRootPath = "/user"
 
 type (
 	user interface {
-		mapToUserCore() *core.UserCore
+		mapToUserCore() core.User
 	}
 	userCreateDTO struct {
 		ID       uuid.UUID `json:"id" validate:"required"`
@@ -27,12 +26,6 @@ type (
 	userLoginDTO struct {
 		ID       uuid.UUID `json:"id" validate:"required"`
 		Password string    `json:"password" validate:"required"`
-	}
-
-	userResponseDTO struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedOn time.Time `json:"created_on"`
-		LastLogin time.Time `json:"last_login"`
 	}
 )
 
@@ -55,29 +48,25 @@ func create(context echo.Context) error {
 	}
 	if err := userCore.Create(); err != nil {
 		if errors.Is(err, errormessages.UserAlreadyExists) {
-			log.Warn("User with id %s already exists", userCore.ID)
+			log.Warn("User with id %s already exists", userCore.GetId())
 			return context.NoContent(http.StatusConflict)
 		}
 		return err
 	}
 
-	log.Debugf("Created user with id %s", userCore.ID)
+	log.Debugf("Created user with id %s", userCore.GetId())
 	return context.NoContent(http.StatusCreated)
 }
 
-func (user *userCreateDTO) mapToUserCore() *core.UserCore {
+func (user *userCreateDTO) mapToUserCore() core.User {
 	return &core.UserCore{Password: user.Password}
 }
 
-func (user *userLoginDTO) mapToUserCore() *core.UserCore {
+func (user *userLoginDTO) mapToUserCore() core.User {
 	return &core.UserCore{ID: user.ID, Password: user.Password}
 }
 
-func mapToUserResponseDTO(user *core.UserCore) *userResponseDTO {
-	return &userResponseDTO{ID: user.ID, CreatedOn: user.CreatedOn, LastLogin: user.LastLogin}
-}
-
-func bind(context echo.Context, toBindUser user) (*core.UserCore, error) {
+func bind(context echo.Context, toBindUser user) (core.User, error) {
 	log.Debugf("Bind context to user %v", context)
 	if err := context.Bind(toBindUser); err != nil {
 		log.Warnf("Could not bind user, %v", err)

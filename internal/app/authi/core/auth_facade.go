@@ -18,14 +18,21 @@ var (
 	signKey *rsa.PrivateKey
 )
 
-type TokenCore struct {
-	AccessToken      string
-	ExpiresIn        int
-	RefreshToken     string
-	RefreshExpiresIn int
-}
+type (
+	TokenCore struct {
+		AccessToken      string
+		ExpiresIn        int
+		RefreshToken     string
+		RefreshExpiresIn int
+	}
+	AuthFacade interface {
+		Init()
+		CreateJWTTokenFromRefreshToken(userId uuid.UUID, refreshToken string) (*TokenCore, error)
+	}
+	AuthFacadeImpl struct{}
+)
 
-func Init() {
+func (authFacade *AuthFacadeImpl) Init() {
 	err := authadapter.Init()
 	if err != nil {
 		log.Fatalf("Error while init authAdapter: %v", err)
@@ -42,7 +49,7 @@ func Init() {
 	}
 }
 
-func CreateJWTTokenFromRefreshToken(userId uuid.UUID, refreshToken string) (*TokenCore, error) {
+func (authFacade *AuthFacadeImpl) CreateJWTTokenFromRefreshToken(userId uuid.UUID, refreshToken string) (*TokenCore, error) {
 	if err := db.CheckRefreshToken(userId, refreshToken); err != nil {
 		return nil, fmt.Errorf("no user with refreshtoken was found: %v", err)
 	}
