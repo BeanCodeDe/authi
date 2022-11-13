@@ -1,4 +1,4 @@
-FROM golang:1.18.3 as development
+FROM golang:1.19.3 as development
 
 WORKDIR /app
 
@@ -7,10 +7,10 @@ RUN go mod download
 
 COPY . .
 ENV CGO_ENABLED=0
-RUN make build
+RUN make app.build
 
-FROM alpine:3.14
+FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
-COPY --from=0 /app/auth ./
-CMD ["./auth"]  
+COPY --from=0 /app/authi ./
+CMD ["./authi"]  

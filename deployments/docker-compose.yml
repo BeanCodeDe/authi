@@ -16,104 +16,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5 
-  spacelight-auth:
-    build: SpaceLight-Auth/.
+  authi:
+    build: 
+      context: ../
+      dockerfile: build/Dockerfile
+    image: "beancodede/authi:latest"
+    container_name: authi
     restart: always
     environment: 
-      - POSTGRES_USER=$SPACELIGHT_AUTH_POSTGRES_USER
-      - POSTGRES_DB=$SPACELIGHT_AUTH_POSTGRES_DB
-      - POSTGRES_PASSWORD=$SPACELIGHT_AUTH_POSTGRES_PASSWORD
+      - POSTGRES_USER=$AUTH_POSTGRES_USER
+      - POSTGRES_DB=$AUTH_POSTGRES_DB
+      - POSTGRES_PASSWORD=$AUTH_POSTGRES_PASSWORD
       - POSTGRES_HOST=$POSTGRES_HOST
       - POSTGRES_PORT=$POSTGRES_PORT
-      - LOG_LEVEL=$SPACELIGHT_AUTH_LOG_LEVEL
-      - PUBLIC_KEY_PATH=$SPACELIGHT_PUBLIC_KEY_PATH
-      - PRIVATE_KEY_PATH=$SPACELIGHT_AUTH_PRIVATE_KEY_PATH
+      - LOG_LEVEL=$AUTH_LOG_LEVEL
+      - PUBLIC_KEY_PATH=$PUBLIC_KEY_PATH
+      - PRIVATE_KEY_PATH=$AUTH_PRIVATE_KEY_PATH
     ports:
       - 1323:1323
     volumes: 
-      - public-key-volume:$SPACELIGHT_PUBLIC_KEY_FOLDER_PATH
-      - $LOCAL_PRIVATE_KEY_PATH:$SPACELIGHT_PRIVAT_KEY_FOLDER_PATH
+      - public-key-volume:$PUBLIC_KEY_FOLDER_PATH
+      - $LOCAL_PRIVATE_KEY_PATH:$PRIVAT_KEY_FOLDER_PATH
     depends_on:
       postgres:
         condition: service_healthy
     links:
       - postgres:postgres
-  spacelight-data:
-    build: SpaceLight-Data/.
-    restart: always
-    environment: 
-      - POSTGRES_USER=$SPACELIGHT_DATA_POSTGRES_USER
-      - POSTGRES_DB=$SPACELIGHT_DATA_POSTGRES_DB
-      - POSTGRES_PASSWORD=$SPACELIGHT_DATA_POSTGRES_PASSWORD
-      - POSTGRES_HOST=$POSTGRES_HOST
-      - POSTGRES_PORT=$POSTGRES_PORT
-      - LOG_LEVEL=$SPACELIGHT_DATA_LOG_LEVEL
-      - PUBLIC_KEY_PATH=$SPACELIGHT_PUBLIC_KEY_PATH
-      - AUTH_URL=$SPACELIGHT_AUTH_URL
-      - AUTH_USER_URL=$SPACELIGHT_DATA_AUTH_USER_URL
-      - AUTH_LOGIN_URL=$SPACELIGHT_AUTH_LOGIN_URL
-      - SERVICE_ID=$SPACELIGHT_DATA_SERVICE_ID
-      - SERVICE_PASSWORD=$SPACELIGHT_DATA_SERVICE_PASSWORD
-    ports:
-      - 1322:1323
-    volumes: 
-      - public-key-volume:$SPACELIGHT_PUBLIC_KEY_FOLDER_PATH
-    depends_on:
-      postgres:
-        condition: service_healthy
-    links:
-      - postgres:postgres
-      - spacelight-auth:spacelight-auth
-  spacelight-matchserver:
-    build: SpaceLight-MatchServer/.
-    restart: always
-    environment: 
-      - AUTH_LOGIN_URL=$SPACELIGHT_AUTH_LOGIN_URL
-      - AUTH_URL=$SPACELIGHT_AUTH_URL
-      - PUBLIC_KEY_PATH=$SPACELIGHT_PUBLIC_KEY_PATH
-      - LOG_LEVEL=$SPACELIGHT_MATCHSERVER_LOG_LEVEL
-      - SERVICE_ID=$SPACELIGHT_MATCHSERVER_SERVICE_ID
-      - SERVICE_PASSWORD=$SPACELIGHT_MATCHSERVER_SERVICE_PASSWORD
-      - MATCHMAKER_REGISTER_URL=$SPACELIGHT_MATCHSERVER_MATCHMAKER_URL
-      - MATCHSERVER_URL=$SPACELIGHT_MATCHSERVER_URL
-      - MATCHSERVER_PORT=$SPACELIGHT_MATCHSERVER_PORT
-    ports:
-      - 1321:1323
-      - 1400:1400
-    volumes: 
-      - public-key-volume:$SPACELIGHT_PUBLIC_KEY_FOLDER_PATH
-    depends_on:
-      postgres:
-        condition: service_healthy
-    links:
-      - postgres:postgres
-      - spacelight-auth:spacelight-auth
-      - spacelight-matchmaker:spacelight-matchmaker
-  spacelight-matchmaker:
-    build: SpaceLight-Matchmaker/.
-    restart: always
-    environment: 
-      - POSTGRES_USER=$SPACELIGHT_MATCHMAKER_POSTGRES_USER
-      - POSTGRES_DB=$SPACELIGHT_MATCHMAKER_POSTGRES_DB
-      - POSTGRES_PASSWORD=$SPACELIGHT_MATCHMAKER_POSTGRES_PASSWORD
-      - POSTGRES_HOST=$POSTGRES_HOST
-      - POSTGRES_PORT=$POSTGRES_PORT
-      - LOG_LEVEL=$SPACELIGHT_MATCHMAKER_LOG_LEVEL
-      - AUTH_URL=$SPACELIGHT_AUTH_URL
-      - PUBLIC_KEY_PATH=$SPACELIGHT_PUBLIC_KEY_PATH
-      - AUTH_LOGIN_URL=$SPACELIGHT_AUTH_LOGIN_URL
-      - SERVICE_ID=$SPACELIGHT_MATCHMAKER_SERVICE_ID
-      - SERVICE_PASSWORD=$SPACELIGHT_MATCHMAKER_SERVICE_PASSWORD
-    ports:
-      - 1320:1323
-    volumes: 
-      - public-key-volume:$SPACELIGHT_PUBLIC_KEY_FOLDER_PATH
-    depends_on:
-      postgres:
-        condition: service_healthy
-    links:
-      - postgres:postgres
-      - spacelight-auth:spacelight-auth  
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4
