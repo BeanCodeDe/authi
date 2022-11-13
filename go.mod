@@ -1,9 +1,8 @@
-module github.com/BeanCodeDe/SpaceLight-Auth
+module github.com/BeanCodeDe/authi
 
 go 1.18
 
 require (
-	github.com/BeanCodeDe/SpaceLight-AuthMiddleware v0.0.0-20220612171501-861dd10793be
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.12.1

@@ -4,33 +4,43 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/authErr"
+	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	log "github.com/sirupsen/logrus"
 )
 
 type UserDB struct {
 	ID        uuid.UUID `db:"id"`
 	Password  string    `db:"password"`
-	Roles     []string  `db:"roles"`
 	CreatedOn time.Time `db:"created_on"`
 	LastLogin time.Time `db:"last_login"`
 }
 
 func (user *UserDB) Create() error {
-	log.Debugf("Create user")
 	hash := getHash()
+	if _, err := getConnection().Exec(context.Background(), "INSERT INTO authi.user(id, password,salt,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case pgerrcode.UniqueViolation:
+				return errormessages.UserAlreadyExists
+			}
+		}
 
-	if _, err := getConnection().Exec(context.Background(), "INSERT INTO spacelight.user(id, password,salt,roles,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5,$6)", user.ID, user.Password+hash, hash, user.Roles, user.CreatedOn, user.LastLogin); err != nil {
-		log.Errorf("Unknown error when inserting user: %v", err)
-		return authErr.UnknownError
+		return fmt.Errorf("unknown error when inserting user: %v", err)
 	}
-	log.Debugf("User inserted into database")
+	return nil
+}
+
+func UpdateRefreshToken(userId uuid.UUID, refreshToken string) error {
+	if _, err := getConnection().Exec(context.Background(), "UPDATE authi.user SET refresh_token=$1 WHERE id=$2", refreshToken, userId); err != nil {
+		return fmt.Errorf("unknown error when updating refresh token of user %s user: %v", userId, err)
+	}
 	return nil
 }
 
@@ -45,68 +55,78 @@ func getHash() string {
 }
 
 func GetUserById(userId uuid.UUID) (*UserDB, error) {
-	log.Debugf("Get user %s by UserId", userId)
-
 	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,roles::text[],created_on,last_login FROM spacelight.user WHERE id = $1`, userId); err != nil {
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,created_on,last_login FROM spacelight.user WHERE id = $1`, userId); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case pgerrcode.NoDataFound:
-				log.Warnf("User with id %s not found", userId)
-				return nil, authErr.UserNotFoundError
+				return nil, fmt.Errorf("user with id %s not found", userId)
 			}
 		}
-		log.Errorf("Unknown error when getting user by name: %v", err)
-		return nil, authErr.UnknownError
+		return nil, fmt.Errorf("unknown error when getting user by name: %v", err)
 	}
 
 	if len(users) == 0 {
-		log.Errorf("User with id %s not found.", userId)
-		return nil, authErr.UserNotFoundError
+		return nil, fmt.Errorf("user with id %s not found", userId)
 	}
 
 	if len(users) != 1 {
-		log.Errorf("Cant find only one user. Len: %s, Userlist: %v", len(users), users)
-		return nil, authErr.UnknownError
+		return nil, fmt.Errorf("cant find only one user. Len: %v, Userlist: %v", len(users), users)
 	}
 
-	log.Debugf("Got user %v", users[0])
 	return users[0], nil
 }
 
 func (user *UserDB) LoginUser() error {
-	log.Debugf("Check password for user %s", user.ID)
 
 	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,roles::text[],created_on,last_login FROM spacelight.user WHERE id = $1 AND password = MD5(CONCAT($2::text,(SELECT salt FROM spacelight.user WHERE id = $1)::text))`, user.ID, user.Password); err != nil {
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,created_on,last_login FROM spacelight.user WHERE id = $1 AND password = MD5(CONCAT($2::text,(SELECT salt FROM spacelight.user WHERE id = $1)::text))`, user.ID, user.Password); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case pgerrcode.NoDataFound:
-				log.Warnf("No user with id %s and matching password found", user.ID)
-				return authErr.WrongAuthDataError
+				return fmt.Errorf("no user with id %s and matching password found", user.ID)
 			}
 		}
-		log.Errorf("Unknown error when checking user: %v", err)
-		return authErr.UnknownError
+		return fmt.Errorf("unknown error when checking user: %v", err)
 	}
 
 	if len(users) == 0 {
-		log.Errorf("User with id %s not found. Probably wrong password", user.ID)
-		return authErr.WrongAuthDataError
+		return fmt.Errorf("user with id %s not found. Probably wrong password", user.ID)
 	}
 
 	if len(users) != 1 {
-		log.Errorf("Cant find only one user. Len: %s, Userlist: %v", len(users), users)
-		return authErr.UnknownError
+		return fmt.Errorf("cant find only one user. Len: %v, Userlist: %v", len(users), users)
 	}
-
-	log.Debugf("Got user %v", users[0].ID)
 
 	user.CreatedOn = users[0].CreatedOn
 	user.LastLogin = users[0].LastLogin
-	user.Roles = users[0].Roles
+
+	return nil
+}
+
+func CheckRefreshToken(userId uuid.UUID, refreshToken string) error {
+
+	var users []*UserDB
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id FROM spacelight.user WHERE id = $1 AND refresh_token = $2`, userId, refreshToken); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case pgerrcode.NoDataFound:
+				return fmt.Errorf("no user with id %s and matching refresh token found", userId)
+			}
+		}
+		return fmt.Errorf("unknown error when checking user: %v", err)
+	}
+
+	if len(users) == 0 {
+		return fmt.Errorf("user with id %s not found. Probably wrong refresh token", userId)
+	}
+
+	if len(users) != 1 {
+		return fmt.Errorf("cant find only one user. Len: %v, Userlist: %v", len(users), users)
+	}
 
 	return nil
 }

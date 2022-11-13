@@ -1,17 +1,15 @@
 package main
 
 import (
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/api"
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/auth"
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/config"
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/db"
+	"github.com/BeanCodeDe/authi/internal/app/authi/api"
+	"github.com/BeanCodeDe/authi/internal/app/authi/config"
+	"github.com/BeanCodeDe/authi/internal/app/authi/core"
+	"github.com/BeanCodeDe/authi/internal/app/authi/db"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/labstack/echo/v4"
 )
-
-//const rootPath = "/spacelight"
 
 type CustomValidator struct {
 	validator *validator.Validate
@@ -26,7 +24,7 @@ func main() {
 	setLogLevel(config.LogLevel)
 	log.Info("Start Server")
 	db.Init()
-	auth.Init()
+	core.Init()
 	e := echo.New()
 	e.HTTPErrorHandler = api.CustomHTTPErrorHandler
 	e.Validator = &CustomValidator{validator: validator.New()}

@@ -1,11 +1,12 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/core"
-	"github.com/BeanCodeDe/SpaceLight-AuthMiddleware/authAdapter"
+	"github.com/BeanCodeDe/authi/internal/app/authi/core"
+	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -19,56 +20,49 @@ type (
 		mapToUserCore() *core.UserCore
 	}
 	userCreateDTO struct {
-		Password string `json:"Password" validate:"required"`
+		ID       uuid.UUID `json:"id" validate:"required"`
+		Password string    `json:"password" validate:"required"`
 	}
 
 	userLoginDTO struct {
-		ID       uuid.UUID `json:"ID" validate:"required"`
-		Password string    `json:"Password" validate:"required"`
+		ID       uuid.UUID `json:"id" validate:"required"`
+		Password string    `json:"password" validate:"required"`
 	}
 
 	userResponseDTO struct {
-		ID        uuid.UUID
-		CreatedOn time.Time
-		LastLogin time.Time
+		ID        uuid.UUID `json:"id"`
+		CreatedOn time.Time `json:"created_on"`
+		LastLogin time.Time `json:"last_login"`
 	}
 )
 
 func InitUserInterface(group *echo.Group) {
-	group.GET("/login", login)
-	group.PUT("", create, authAdapter.CheckToken, authAdapter.CheckRole(authAdapter.DataServiceRole))
+	group.POST("", createUserId)
+	group.PUT("", create)
 }
 
-func login(context echo.Context) error {
-	log.Debugf("Login some user")
-	userCore, err := bind(context, new(userLoginDTO))
-	if err != nil {
-		return err
-	}
-
-	token, err := userCore.Login()
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("Logged in user %s", userCore.ID)
-	return context.String(http.StatusOK, token)
+func createUserId(context echo.Context) error {
+	log.Debug("Create User")
+	return context.String(http.StatusOK, uuid.NewString())
 }
 
 func create(context echo.Context) error {
-	log.Debugf("Create some user")
+	log.Debugf("Create user")
 	userCore, err := bind(context, new(userCreateDTO))
 	if err != nil {
-		return err
+		log.Warnf("Error while binding user: %v", err)
+		return echo.ErrBadRequest
 	}
-	createdUser, err := userCore.Create()
-	if err != nil {
+	if err := userCore.Create(); err != nil {
+		if errors.Is(err, errormessages.UserAlreadyExists) {
+			log.Warn("User with id %s already exists", userCore.ID)
+			return context.NoContent(http.StatusConflict)
+		}
 		return err
 	}
 
-	log.Debugf("Created user %s", createdUser.ID)
-	userResponseDTO := mapToUserResponseDTO(createdUser)
-	return context.JSON(http.StatusCreated, userResponseDTO)
+	log.Debugf("Created user with id %s", userCore.ID)
+	return context.NoContent(http.StatusCreated)
 }
 
 func (user *userCreateDTO) mapToUserCore() *core.UserCore {

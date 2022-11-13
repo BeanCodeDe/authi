@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/BeanCodeDe/SpaceLight-Auth/internal/config"
+	"github.com/BeanCodeDe/authi/internal/app/authi/config"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/jackc/pgx/v4/pgxpool"
