@@ -10,7 +10,7 @@ app.build:
 app.jt.run:
 	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate -d
 	go test ./test
-	docker compose down
+	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) down
 
 docker.build:
 	docker build . -f $(DOCKER_PATH)
