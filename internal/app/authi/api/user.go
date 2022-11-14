@@ -12,15 +12,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const UserRootPath = "/user"
+const (
+	UserRootPath = "/user"
+	userIdParam  = "userId"
+)
 
 type (
 	user interface {
 		mapToUserCore() core.User
 	}
 	userCreateDTO struct {
-		ID       uuid.UUID `json:"id" validate:"required"`
-		Password string    `json:"password" validate:"required"`
+		Password string `json:"password" validate:"required"`
 	}
 
 	userLoginDTO struct {
@@ -31,7 +33,7 @@ type (
 
 func InitUserInterface(group *echo.Group) {
 	group.POST("", createUserId)
-	group.PUT("", create)
+	group.PUT("/:"+userIdParam, create)
 }
 
 func createUserId(context echo.Context) error {
@@ -46,6 +48,12 @@ func create(context echo.Context) error {
 		log.Warnf("Error while binding user: %v", err)
 		return echo.ErrBadRequest
 	}
+	userId, err := uuid.Parse(context.Param(userIdParam))
+	if err != nil {
+		log.Warnf("Error while binding userId: %v", err)
+		return echo.ErrBadRequest
+	}
+	userCore.SetId(userId)
 	if err := userCore.Create(); err != nil {
 		if errors.Is(err, errormessages.UserAlreadyExists) {
 			log.Warn("User with id %s already exists", userCore.GetId())

@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   postgres:
-    image: postgres:9.6
+    image: postgres:latest
     restart: always
     environment: 
       - POSTGRES_USER=$POSTGRES_USER
@@ -33,7 +33,7 @@ services:
       - PUBLIC_KEY_PATH=$PUBLIC_KEY_PATH
       - PRIVATE_KEY_PATH=$AUTH_PRIVATE_KEY_PATH
     ports:
-      - 1323:1323
+      - 1203:1203
     volumes: 
       - public-key-volume:$PUBLIC_KEY_FOLDER_PATH
       - $LOCAL_PRIVATE_KEY_PATH:$PRIVAT_KEY_FOLDER_PATH

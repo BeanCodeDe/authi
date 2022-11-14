@@ -23,7 +23,7 @@ type UserDB struct {
 
 func (user *UserDB) Create() error {
 	hash := getHash()
-	if _, err := getConnection().Exec(context.Background(), "INSERT INTO authi.user(id, password,salt,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin); err != nil {
+	if _, err := getConnection().Exec(context.Background(), "INSERT INTO auth.user(id, password,salt,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
@@ -38,7 +38,7 @@ func (user *UserDB) Create() error {
 }
 
 func UpdateRefreshToken(userId uuid.UUID, refreshToken string) error {
-	if _, err := getConnection().Exec(context.Background(), "UPDATE authi.user SET refresh_token=$1 WHERE id=$2", refreshToken, userId); err != nil {
+	if _, err := getConnection().Exec(context.Background(), "UPDATE auth.user SET refresh_token=$1 WHERE id=$2", refreshToken, userId); err != nil {
 		return fmt.Errorf("unknown error when updating refresh token of user %s user: %v", userId, err)
 	}
 	return nil
@@ -56,7 +56,7 @@ func getHash() string {
 
 func GetUserById(userId uuid.UUID) (*UserDB, error) {
 	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,created_on,last_login FROM spacelight.user WHERE id = $1`, userId); err != nil {
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,created_on,last_login FROM auth.user WHERE id = $1`, userId); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
@@ -81,7 +81,7 @@ func GetUserById(userId uuid.UUID) (*UserDB, error) {
 func (user *UserDB) LoginUser() error {
 
 	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,created_on,last_login FROM spacelight.user WHERE id = $1 AND password = MD5(CONCAT($2::text,(SELECT salt FROM spacelight.user WHERE id = $1)::text))`, user.ID, user.Password); err != nil {
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id,created_on,last_login FROM auth.user WHERE id = $1 AND password = MD5(CONCAT($2::text,(SELECT salt FROM auth.user WHERE id = $1)::text))`, user.ID, user.Password); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
@@ -109,7 +109,7 @@ func (user *UserDB) LoginUser() error {
 func CheckRefreshToken(userId uuid.UUID, refreshToken string) error {
 
 	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id FROM spacelight.user WHERE id = $1 AND refresh_token = $2`, userId, refreshToken); err != nil {
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id FROM auth.user WHERE id = $1 AND refresh_token = $2`, userId, refreshToken); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {

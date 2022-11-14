@@ -20,6 +20,7 @@ type (
 		Create() error
 		Login() (*TokenCore, error)
 		GetId() uuid.UUID
+		SetId(uuid.UUID)
 		GetCreatedOn() time.Time
 		GetLastLogin() time.Time
 	}
@@ -42,13 +43,17 @@ func (user *UserCore) Login() (*TokenCore, error) {
 	dbUser := user.mapToUserDB()
 	err := dbUser.LoginUser()
 	if err != nil {
-		return nil, fmt.Errorf("something went wrong when logging in user, %v", user.ID)
+		return nil, fmt.Errorf("something went wrong when logging in user, %v: %v", user.ID, err)
 	}
 	return createJWTToken(user.ID)
 }
 
 func (user *UserCore) GetId() uuid.UUID {
 	return user.ID
+}
+
+func (user *UserCore) SetId(userId uuid.UUID) {
+	user.ID = userId
 }
 
 func (user *UserCore) GetCreatedOn() time.Time {

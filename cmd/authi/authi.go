@@ -30,7 +30,7 @@ func main() {
 	api.InitUserInterface(userGroup)
 	authGroup := e.Group(api.AuthRootPath)
 	api.InitAuthInterface(authGroup)
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":1203"))
 }
 
 func setLogLevel(logLevel string) {

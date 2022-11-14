@@ -56,7 +56,6 @@ func login(context echo.Context) error {
 		log.Warnf("Error while binding user: %v", err)
 		return echo.ErrBadRequest
 	}
-
 	tokenCore, err := userCore.Login()
 	if err != nil {
 		log.Warnf("Error while logging in user %v: %v", userCore, err)

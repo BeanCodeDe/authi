@@ -7,8 +7,13 @@ ENV_CONFIG?=./deployments/dev.env
 app.build:
 	go build -o $(APP_NAME) $(SRC_PATH)
 
+app.jt.run:
+	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate -d
+	go test ./test
+	docker compose down
+
 docker.build:
 	docker build . -f $(DOCKER_PATH)
 
-docker.cpmpose.run:
+docker.compose.run:
 	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate
