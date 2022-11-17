@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/rsa"
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 
 var (
 	signKey *rsa.PrivateKey
+	symbols []rune = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
 )
 
 type (
@@ -60,7 +62,7 @@ func (authFacade *AuthFacadeImpl) CreateJWTTokenFromRefreshToken(userId uuid.UUI
 func createJWTToken(userId uuid.UUID) (*TokenCore, error) {
 
 	tokenExpireAt := time.Now().Add(5 * time.Minute).Unix()
-	refreshTokenExpireAt := time.Now().Add(10 * time.Minute).Unix()
+	refreshTokenExpireAt := time.Now().Add(10 * time.Minute)
 
 	claimsToken := &authadapter.Claims{
 		UserId: userId,
@@ -69,27 +71,25 @@ func createJWTToken(userId uuid.UUID) (*TokenCore, error) {
 		},
 	}
 
-	claimsRefreshToken := &authadapter.Claims{
-		UserId: userId,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: refreshTokenExpireAt,
-		},
-	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claimsToken)
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claimsRefreshToken)
 	signedToken, err := token.SignedString(signKey)
 	if err != nil {
 		return nil, fmt.Errorf("token creation failed: %v", err)
 	}
 
-	signedRefreshToken, err := refreshToken.SignedString(signKey)
-	if err != nil {
-		return nil, fmt.Errorf("refresh token creation failed: %v", err)
-	}
-
-	if err = db.UpdateRefreshToken(userId, signedRefreshToken); err != nil {
+	refreshToken := randomString()
+	if err = db.UpdateRefreshToken(userId, refreshToken, refreshTokenExpireAt); err != nil {
 		return nil, fmt.Errorf("refresh token could not be saved into database: %v", err)
 	}
-	return &TokenCore{AccessToken: signedToken, ExpiresIn: int(tokenExpireAt), RefreshToken: signedRefreshToken, RefreshExpiresIn: int(refreshTokenExpireAt)}, nil
+	return &TokenCore{AccessToken: signedToken, ExpiresIn: int(tokenExpireAt), RefreshToken: refreshToken, RefreshExpiresIn: int(refreshTokenExpireAt.Unix())}, nil
+}
+
+func randomString() string {
+	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	var bytes = make([]byte, 32)
+	rand.Read(bytes)
+	for i, b := range bytes {
+		bytes[i] = alphanum[b%byte(len(alphanum))]
+	}
+	return string(bytes)
 }

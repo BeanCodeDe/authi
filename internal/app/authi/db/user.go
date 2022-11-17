@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"time"
@@ -21,8 +20,7 @@ type UserDB struct {
 	LastLogin time.Time `db:"last_login"`
 }
 
-func (user *UserDB) Create() error {
-	hash := getHash()
+func (user *UserDB) Create(hash string) error {
 	if _, err := getConnection().Exec(context.Background(), "INSERT INTO auth.user(id, password,salt,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -37,21 +35,11 @@ func (user *UserDB) Create() error {
 	return nil
 }
 
-func UpdateRefreshToken(userId uuid.UUID, refreshToken string) error {
-	if _, err := getConnection().Exec(context.Background(), "UPDATE auth.user SET refresh_token=$1 WHERE id=$2", refreshToken, userId); err != nil {
+func UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
+	if _, err := getConnection().Exec(context.Background(), "UPDATE auth.user SET refresh_token=$1, refresh_token_expire=$2 WHERE id=$3", refreshToken, refreshTokenExpireAt, userId); err != nil {
 		return fmt.Errorf("unknown error when updating refresh token of user %s user: %v", userId, err)
 	}
 	return nil
-}
-
-func getHash() string {
-	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	var bytes = make([]byte, 32)
-	rand.Read(bytes)
-	for i, b := range bytes {
-		bytes[i] = alphanum[b%byte(len(alphanum))]
-	}
-	return string(bytes)
 }
 
 func GetUserById(userId uuid.UUID) (*UserDB, error) {
@@ -109,7 +97,7 @@ func (user *UserDB) LoginUser() error {
 func CheckRefreshToken(userId uuid.UUID, refreshToken string) error {
 
 	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id FROM auth.user WHERE id = $1 AND refresh_token = $2`, userId, refreshToken); err != nil {
+	if err := pgxscan.Select(context.Background(), getConnection(), &users, `SELECT id FROM auth.user WHERE id = $1 AND refresh_token = $2 AND refresh_token_expire > now()`, userId, refreshToken); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {

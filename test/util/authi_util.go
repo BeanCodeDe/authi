@@ -2,11 +2,14 @@ package util
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/golang-jwt/jwt"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -15,6 +18,18 @@ const (
 	loginPath   = "/login"
 	refreshPath = "/refresh"
 )
+
+const (
+	PublicKeyFile      = "./data/token/public/jwtRS256.key.pub"
+	PrivatKeyFile      = "./data/token/privat/jwtRS256.key"
+	WrongPublicKeyFile = "./data/token/public/jwtRS256_wrong.key.pub"
+	WrongPrivatKeyFile = "./data/token/privat/jwtRS256_wrong.key"
+)
+
+type Claims struct {
+	UserId string `json:"user_id"`
+	jwt.StandardClaims
+}
 
 func sendLoginRequest(user *UserDTO) *http.Response {
 	userJson, err := json.Marshal(user)
@@ -80,10 +95,41 @@ func RefreshToken(token string, refreshToken string) (*TokenResponseDTO, int) {
 	return tokenResponse, response.StatusCode
 }
 
-func OptainToken(t *testing.T) *TokenResponseDTO {
+func OptainToken(t *testing.T) (*TokenResponseDTO, *UserDTO) {
 	userId := CreateUserForFurtherTesting(t)
 	user := &UserDTO{ID: userId, Password: DefaultPassword}
 	token, status := Login(user)
 	assert.Equal(t, status, http.StatusOK)
-	return token
+	return token, user
+}
+
+func CreateCustomJWTToken(userId string, expirationTime int64, signKey *rsa.PrivateKey) string {
+	claims := &Claims{
+		UserId: userId,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	signedToken, err := token.SignedString(signKey)
+	if err != nil {
+		panic(err)
+	}
+
+	return signedToken
+}
+
+func LoadPrivatKeyFile(fileName string) *rsa.PrivateKey {
+	verifyBytes, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	verifyKey, err := jwt.ParseRSAPrivateKeyFromPEM(verifyBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return verifyKey
 }

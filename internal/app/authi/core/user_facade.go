@@ -32,7 +32,7 @@ func (user *UserCore) Create() error {
 	user.CreatedOn = creationTime
 	user.LastLogin = creationTime
 
-	if err := user.mapToUserDB().Create(); err != nil {
+	if err := user.mapToUserDB().Create(randomString()); err != nil {
 		return err
 	}
 

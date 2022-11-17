@@ -11,28 +11,21 @@ import (
 func CheckToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authHeader := c.Request().Header.Get(authadapter.AuthorizationHeaderName)
-		if authHeader == "" {
-			return fmt.Errorf("no auth Header found")
-		}
 
 		claims, err := authadapter.ParseToken(authHeader)
 		if err != nil {
-			return fmt.Errorf("error while parsing token: %v", err)
+			fmt.Printf("error while parsing token %v", err)
+			//error while parsing token
+			return echo.ErrBadRequest
 		}
 
-		var token string
-
-		if time.Now().Add(1 * time.Minute).After(time.Unix(claims.ExpiresAt, 0)) {
-			token, err = authadapter.CreateJWTToken(authHeader)
-			if err != nil {
-				return fmt.Errorf("error while creating token: %v", err)
-			}
-			c.Response().Header().Set(authadapter.AuthorizationHeaderName, token)
-		} else {
-			token = authHeader
+		if time.Now().After(time.Unix(claims.ExpiresAt, 0)) {
+			fmt.Printf("token expired")
+			//token expired
+			return echo.ErrUnauthorized
 		}
+
 		c.Set(authadapter.ClaimName, *claims)
-		c.Response().Header().Set(authadapter.AuthorizationHeaderName, token)
 		return next(c)
 	}
 }
