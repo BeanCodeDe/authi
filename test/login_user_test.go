@@ -14,3 +14,10 @@ func TestLogin(t *testing.T) {
 	_, status := util.Login(user)
 	assert.Equal(t, status, http.StatusOK)
 }
+
+func TestLoginFailed(t *testing.T) {
+	userId := util.CreateUserForFurtherTesting(t)
+	user := &util.UserDTO{ID: userId, Password: "wrongPassword"}
+	_, status := util.Login(user)
+	assert.Equal(t, status, http.StatusUnauthorized)
+}

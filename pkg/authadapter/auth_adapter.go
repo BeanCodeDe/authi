@@ -47,6 +47,9 @@ func Init() error {
 
 func ParseToken(authorizationString string) (*Claims, error) {
 	splitToken := strings.Split(authorizationString, "Bearer ")
+	if len(splitToken) != 2 {
+		return nil, fmt.Errorf("token not found")
+	}
 	tokenString := splitToken[1]
 
 	claims := &Claims{}

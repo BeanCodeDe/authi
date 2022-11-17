@@ -5,6 +5,7 @@ import (
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/authmiddleware"
 	"github.com/labstack/echo/v4"
 
 	log "github.com/sirupsen/logrus"
@@ -26,7 +27,7 @@ func InitAuthInterface(group *echo.Group) {
 	test := &core.AuthFacadeImpl{}
 	test.Init()
 	authFacade.Init()
-	group.PATCH("/refresh", refreshToken)
+	group.PATCH("/refresh", refreshToken, authmiddleware.CheckToken)
 	group.GET("/login", login)
 }
 

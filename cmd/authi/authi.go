@@ -24,7 +24,6 @@ func main() {
 	log.Info("Start Server")
 	db.Init()
 	e := echo.New()
-	e.HTTPErrorHandler = api.CustomHTTPErrorHandler
 	e.Validator = &CustomValidator{validator: validator.New()}
 	userGroup := e.Group(api.UserRootPath)
 	api.InitUserInterface(userGroup)
