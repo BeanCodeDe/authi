@@ -48,7 +48,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build the Docker image
-        run: docker build docker build . -f ./build/Dockerfile --tag beancodede/authi:$(date +%s)
+        run: docker build . -f ./build/Dockerfile --tag beancodede/authi:$(date +%s)
       
       - name: Push the Docker image
         run: docker push beancodede/authi:$(date +%s)
