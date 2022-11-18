@@ -17,3 +17,9 @@ docker.build:
 
 docker.compose.run:
 	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate
+
+docker.compose.up:
+	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate -d
+
+docker.compose.down:
+	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) down
