@@ -5,6 +5,7 @@ DOCKER_PATH?=./build/Dockerfile
 ENV_CONFIG?=./deployments/dev.env
 
 app.build:
+	go mod download
 	go build -o $(APP_NAME) $(SRC_PATH)
 
 app.jt.run:

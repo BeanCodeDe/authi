@@ -2,9 +2,9 @@ name: journeytest
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: isbang/compose-action@v1.4.1
+      - uses: actions/setup-go@v3
 
       - name: Start environment
         run: make docker.compose.up
