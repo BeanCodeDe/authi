@@ -18,7 +18,7 @@ jobs:
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml up --build --force-recreate -d
 
       - name: Test with Go
-        run: go test -json > TestResults.json
+        run: go test ./test -json > TestResults.json
 
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
