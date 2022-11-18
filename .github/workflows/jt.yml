@@ -15,11 +15,8 @@ jobs:
       - uses: actions/setup-go@v3
 
       - name: print path
-        run: tree .
+        run: pwd
 
-      - name: exit
-        run: exit
-        
       - name: Start environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml up --build --force-recreate -d
 
