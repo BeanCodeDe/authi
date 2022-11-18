@@ -12,21 +12,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: isbang/compose-action@v1.4.1
       - uses: actions/setup-go@v3
 
       - name: Start environment
-        run: make docker.compose.up
+        run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml up --build --force-recreate -d
 
       - name: Test with Go
-        run: go test -json > TestResults-${{ matrix.go-version }}.json
+        run: go test -json > TestResults.json
 
       - name: Upload Go test results
         uses: actions/upload-artifact@v3
 
         with:
-          name: Go-results-${{ matrix.go-version }}
-          path: TestResults-${{ matrix.go-version }}.json
+          name: Go-results
+          path: TestResults.json
       
       - name: Shutdown environment
-        run: make docker.compose.down
+        run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml down
