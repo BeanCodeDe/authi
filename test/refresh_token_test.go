@@ -35,7 +35,6 @@ func TestAuthExpiredToken(t *testing.T) {
 	token, user := util.OptainToken(t)
 	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
 	customToken := util.CreateCustomJWTToken(user.ID, time.Now().Add(-1*time.Second).Unix(), signKey)
-	print(customToken)
 	_, status := util.RefreshToken(customToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }

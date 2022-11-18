@@ -17,15 +17,8 @@ jobs:
       - name: Start environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml up --build --force-recreate -d
 
-      - name: Test with Go
-        run: go test ./test -json > TestResults.json
-
-      - name: Upload Go test results
-        uses: actions/upload-artifact@v3
-
-        with:
-          name: Go-results
-          path: TestResults.json
+      - name: Journeytests
+        run: go test ./test -v
       
       - name: Shutdown environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml down
