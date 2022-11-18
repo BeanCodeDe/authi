@@ -25,6 +25,7 @@ func main() {
 	db.Init()
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
+	//e.HTTPErrorHandler = api.CustomHTTPErrorHandler
 	userGroup := e.Group(api.UserRootPath)
 	api.InitUserInterface(userGroup)
 	authGroup := e.Group(api.AuthRootPath)

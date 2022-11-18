@@ -20,7 +20,7 @@ func TestAuth(t *testing.T) {
 func TestAuthWrongFormatAccessToken(t *testing.T) {
 	token, _ := util.OptainToken(t)
 	_, status := util.RefreshToken(token.RefreshToken, token.RefreshToken)
-	assert.Equal(t, status, http.StatusBadRequest)
+	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
 func TestAuthWrongUserIdToken(t *testing.T) {
@@ -31,7 +31,6 @@ func TestAuthWrongUserIdToken(t *testing.T) {
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
-/*
 func TestAuthExpiredToken(t *testing.T) {
 	token, user := util.OptainToken(t)
 	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
@@ -39,7 +38,7 @@ func TestAuthExpiredToken(t *testing.T) {
 	print(customToken)
 	_, status := util.RefreshToken(customToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
-}*/
+}
 
 func TestAuthWrongRefreshToken(t *testing.T) {
 	token, _ := util.OptainToken(t)

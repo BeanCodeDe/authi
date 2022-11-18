@@ -1,12 +1,13 @@
 package authmiddleware
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/BeanCodeDe/authi/pkg/authadapter"
 	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 )
+
+type Authmiddleware struct {
+}
 
 func CheckToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -14,14 +15,7 @@ func CheckToken(next echo.HandlerFunc) echo.HandlerFunc {
 
 		claims, err := authadapter.ParseToken(authHeader)
 		if err != nil {
-			fmt.Printf("error while parsing token %v", err)
-			//error while parsing token
-			return echo.ErrBadRequest
-		}
-
-		if time.Now().After(time.Unix(claims.ExpiresAt, 0)) {
-			fmt.Printf("token expired")
-			//token expired
+			log.Warn("error while parsing token %v", err)
 			return echo.ErrUnauthorized
 		}
 
