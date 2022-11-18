@@ -14,9 +14,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
 
-      - name: print path
-        run: pwd
-
       - name: Start environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml up --build --force-recreate -d
 
