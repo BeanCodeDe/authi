@@ -56,7 +56,7 @@ func create(context echo.Context) error {
 	userCore.SetId(userId)
 	if err := userCore.Create(); err != nil {
 		if errors.Is(err, errormessages.UserAlreadyExists) {
-			log.Warn("User with id %s already exists", userCore.GetId())
+			log.Warnf("User with id %s already exists", userCore.GetId())
 			return context.NoContent(http.StatusConflict)
 		}
 		return err
