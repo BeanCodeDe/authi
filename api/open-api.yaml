@@ -1,0 +1,124 @@
+openapi: "3.0.0"
+info:
+  title: authi Api 
+  version: 1.0.0
+servers:
+  - url: http://localhost:1203
+
+paths:
+  /user:
+    post:
+      tags:
+        - Create User
+      summary: Get ID for new User
+      responses:
+        '200':
+          description: |-
+            Response with UUID for the User
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: f455dea9-f8f2-42e6-bead-e97a3c329d8a
+  /user/{userId}:
+    put:
+      tags:
+        - Create User
+      summary: Create User with ID from post Request
+      parameters:
+        - name: userId
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+            format: UUID
+      requestBody:
+        description: Body with password for User
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '201':
+          description: |-
+            User successfully created
+        '409':
+          description: |-
+            User already exists. Maybe you did a retry? 
+  /auth/login:
+    post:
+      tags:
+        - Login User
+      summary: Get Token for further communication
+      requestBody:
+        description: Body with password and id for user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '200':
+          description: |-
+            Response with access_token and refresh_token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+  /auth/refresh:
+    patch:
+      tags:
+        - Refresh Token
+      summary: Get new token for further communication with refresh token
+      parameters:
+        - in: header
+          name: refresh_token
+          schema:
+            type: string
+          required: true
+      responses:
+        '401':
+          description: |-
+            Unauthorized to get token
+        '200':
+          description: |-
+            Response with access_token and refresh_token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+      security:
+        - bearerAuth: []
+components:
+  schemas:
+    CreateUser:
+      type: object
+      properties:
+        password:
+          type: string
+    LoginUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: UUID
+        password:
+          type: string
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+        refresh_token:
+          type: string
+        refresh_expires_in:
+          type: integer
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
