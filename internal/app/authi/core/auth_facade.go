@@ -27,14 +27,9 @@ type (
 		RefreshToken     string
 		RefreshExpiresIn int
 	}
-	AuthFacade interface {
-		Init()
-		CreateJWTTokenFromRefreshToken(userId uuid.UUID, refreshToken string) (*TokenCore, error)
-	}
-	AuthFacadeImpl struct{}
 )
 
-func (authFacade *AuthFacadeImpl) Init() {
+func Init() {
 	err := authadapter.Init()
 	if err != nil {
 		log.Fatalf("Error while init authAdapter: %v", err)
@@ -51,7 +46,7 @@ func (authFacade *AuthFacadeImpl) Init() {
 	}
 }
 
-func (authFacade *AuthFacadeImpl) CreateJWTTokenFromRefreshToken(userId uuid.UUID, refreshToken string) (*TokenCore, error) {
+func CreateJWTTokenFromRefreshToken(userId uuid.UUID, refreshToken string) (*TokenCore, error) {
 	if err := db.CheckRefreshToken(userId, refreshToken); err != nil {
 		return nil, fmt.Errorf("no user with refreshtoken was found: %v", err)
 	}

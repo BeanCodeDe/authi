@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	authPath    = "/auth"
 	loginPath   = "/login"
 	refreshPath = "/refresh"
 )
@@ -31,13 +30,13 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func sendLoginRequest(user *UserDTO) *http.Response {
-	userJson, err := json.Marshal(user)
+func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response {
+	userJson, err := json.Marshal(authenticate)
 	if err != nil {
 		panic(err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url+authPath+loginPath, bytes.NewBuffer(userJson))
+	req, err := http.NewRequest(http.MethodPost, url+userPath+"/"+userId+loginPath, bytes.NewBuffer(userJson))
 	if err != nil {
 		panic(err)
 	}
@@ -52,8 +51,8 @@ func sendLoginRequest(user *UserDTO) *http.Response {
 	return resp
 }
 
-func sendRefreshTokenRequest(token string, refreshToken string) *http.Response {
-	req, err := http.NewRequest(http.MethodPatch, url+authPath+refreshPath, nil)
+func sendRefreshTokenRequest(userId string, token string, refreshToken string) *http.Response {
+	req, err := http.NewRequest(http.MethodPatch, url+userPath+"/"+userId+refreshPath, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -69,8 +68,8 @@ func sendRefreshTokenRequest(token string, refreshToken string) *http.Response {
 	return resp
 }
 
-func Login(loginUser *UserDTO) (*TokenResponseDTO, int) {
-	response := sendLoginRequest(loginUser)
+func Login(userId string, authenticate *Authenticate) (*TokenResponseDTO, int) {
+	response := sendLoginRequest(userId, authenticate)
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		return nil, response.StatusCode
@@ -82,8 +81,8 @@ func Login(loginUser *UserDTO) (*TokenResponseDTO, int) {
 	return token, response.StatusCode
 }
 
-func RefreshToken(token string, refreshToken string) (*TokenResponseDTO, int) {
-	response := sendRefreshTokenRequest(token, refreshToken)
+func RefreshToken(userId string, token string, refreshToken string) (*TokenResponseDTO, int) {
+	response := sendRefreshTokenRequest(userId, token, refreshToken)
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		return nil, response.StatusCode
@@ -95,12 +94,12 @@ func RefreshToken(token string, refreshToken string) (*TokenResponseDTO, int) {
 	return tokenResponse, response.StatusCode
 }
 
-func OptainToken(t *testing.T) (*TokenResponseDTO, *UserDTO) {
+func ObtainToken(t *testing.T) (*TokenResponseDTO, string, *Authenticate) {
 	userId := CreateUserForFurtherTesting(t)
-	user := &UserDTO{ID: userId, Password: DefaultPassword}
-	token, status := Login(user)
+	authenticate := &Authenticate{Password: DefaultPassword}
+	token, status := Login(userId, authenticate)
 	assert.Equal(t, status, http.StatusOK)
-	return token, user
+	return token, userId, authenticate
 }
 
 func CreateCustomJWTToken(userId string, expirationTime int64, signKey *rsa.PrivateKey) string {

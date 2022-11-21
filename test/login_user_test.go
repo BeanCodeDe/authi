@@ -10,14 +10,14 @@ import (
 
 func TestLogin(t *testing.T) {
 	userId := util.CreateUserForFurtherTesting(t)
-	user := &util.UserDTO{ID: userId, Password: util.DefaultPassword}
-	_, status := util.Login(user)
+	authenticate := &util.Authenticate{Password: util.DefaultPassword}
+	_, status := util.Login(userId, authenticate)
 	assert.Equal(t, status, http.StatusOK)
 }
 
 func TestLoginFailed(t *testing.T) {
 	userId := util.CreateUserForFurtherTesting(t)
-	user := &util.UserDTO{ID: userId, Password: "wrongPassword"}
-	_, status := util.Login(user)
+	authenticate := &util.Authenticate{Password: "wrongPassword"}
+	_, status := util.Login(userId, authenticate)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }

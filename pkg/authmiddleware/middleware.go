@@ -15,7 +15,7 @@ func CheckToken(next echo.HandlerFunc) echo.HandlerFunc {
 
 		claims, err := authadapter.ParseToken(authHeader)
 		if err != nil {
-			log.Warn("error while parsing token %v", err)
+			log.Warnf("error while parsing token %v", err)
 			return echo.ErrUnauthorized
 		}
 

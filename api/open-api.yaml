@@ -15,10 +15,12 @@ paths:
         '200':
           description: |-
             Response with UUID for the User
-          content:
-            text/plain:
+          headers:
+            Location:
+              required: true
               schema:
                 type: string
+                format: UUID
                 example: f455dea9-f8f2-42e6-bead-e97a3c329d8a
   /user/{userId}:
     put:
@@ -39,7 +41,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUser'
+              $ref: '#/components/schemas/Authentication'
       responses:
         '201':
           description: |-
@@ -47,18 +49,26 @@ paths:
         '409':
           description: |-
             User already exists. Maybe you did a retry? 
-  /auth/login:
+  /user/{userId}/login:
     post:
       tags:
         - Login User
       summary: Get Token for further communication
+      parameters:
+        - name: userId
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+            format: UUID      
       requestBody:
         description: Body with password and id for user
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginUser'
+              $ref: '#/components/schemas/Authentication'
       responses:
         '200':
           description: |-
@@ -67,12 +77,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Token'
-  /auth/refresh:
+  /user/{userId}/refresh:
     patch:
       tags:
         - Refresh Token
       summary: Get new token for further communication with refresh token
       parameters:
+        - name: userId
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+            format: UUID      
         - in: header
           name: refresh_token
           schema:
@@ -93,17 +110,9 @@ paths:
         - bearerAuth: []
 components:
   schemas:
-    CreateUser:
+    Authentication:
       type: object
       properties:
-        password:
-          type: string
-    LoginUser:
-      type: object
-      properties:
-        id:
-          type: string
-          format: UUID
         password:
           type: string
     Token:

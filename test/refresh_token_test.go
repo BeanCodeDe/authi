@@ -11,36 +11,42 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	token, _ := util.OptainToken(t)
-	newToken, status := util.RefreshToken(token.AccessToken, token.RefreshToken)
+	token, userId, _ := util.ObtainToken(t)
+	newToken, status := util.RefreshToken(userId, token.AccessToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusOK)
 	assert.NotEqual(t, newToken, nil)
 }
 
 func TestAuthWrongFormatAccessToken(t *testing.T) {
-	token, _ := util.OptainToken(t)
-	_, status := util.RefreshToken(token.RefreshToken, token.RefreshToken)
+	token, userId, _ := util.ObtainToken(t)
+	_, status := util.RefreshToken(userId, token.RefreshToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
 func TestAuthWrongUserIdToken(t *testing.T) {
-	token, _ := util.OptainToken(t)
+	token, userId, _ := util.ObtainToken(t)
 	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
 	customToken := util.CreateCustomJWTToken(uuid.NewString(), time.Now().Add(30*time.Minute).Unix(), signKey)
-	_, status := util.RefreshToken(customToken, token.RefreshToken)
+	_, status := util.RefreshToken(userId, customToken, token.RefreshToken)
+	assert.Equal(t, status, http.StatusUnauthorized)
+}
+
+func TestAuthWrongUserIdPath(t *testing.T) {
+	token, _, _ := util.ObtainToken(t)
+	_, status := util.RefreshToken(uuid.NewString(), token.AccessToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
 func TestAuthExpiredToken(t *testing.T) {
-	token, user := util.OptainToken(t)
+	token, userId, _ := util.ObtainToken(t)
 	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
-	customToken := util.CreateCustomJWTToken(user.ID, time.Now().Add(-1*time.Second).Unix(), signKey)
-	_, status := util.RefreshToken(customToken, token.RefreshToken)
+	customToken := util.CreateCustomJWTToken(userId, time.Now().Add(-1*time.Second).Unix(), signKey)
+	_, status := util.RefreshToken(userId, customToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
 func TestAuthWrongRefreshToken(t *testing.T) {
-	token, _ := util.OptainToken(t)
-	_, status := util.RefreshToken(token.AccessToken, token.AccessToken)
+	token, userId, _ := util.ObtainToken(t)
+	_, status := util.RefreshToken(userId, token.AccessToken, token.AccessToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }

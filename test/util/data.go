@@ -7,8 +7,7 @@ const (
 )
 
 type (
-	UserDTO struct {
-		ID       string `json:"id" validate:"required"`
+	Authenticate struct {
 		Password string `json:"password" validate:"required"`
 	}
 

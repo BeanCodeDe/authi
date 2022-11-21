@@ -8,6 +8,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type CustomValidator struct {
@@ -24,12 +25,11 @@ func main() {
 	log.Info("Start Server")
 	db.Init()
 	e := echo.New()
+	e.Use(middleware.CORS())
 	e.Validator = &CustomValidator{validator: validator.New()}
 	//e.HTTPErrorHandler = api.CustomHTTPErrorHandler
 	userGroup := e.Group(api.UserRootPath)
 	api.InitUserInterface(userGroup)
-	authGroup := e.Group(api.AuthRootPath)
-	api.InitAuthInterface(authGroup)
 	e.Logger.Fatal(e.Start(":1203"))
 }
 

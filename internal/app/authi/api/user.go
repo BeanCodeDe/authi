@@ -6,6 +6,8 @@ import (
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
+	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/authmiddleware"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -18,22 +20,24 @@ const (
 )
 
 type (
-	user interface {
-		mapToUserCore() core.User
-	}
-	userCreateDTO struct {
+	authenticate struct {
 		Password string `json:"password" validate:"required"`
 	}
 
-	userLoginDTO struct {
-		ID       uuid.UUID `json:"id" validate:"required"`
-		Password string    `json:"password" validate:"required"`
+	tokenResponseDTO struct {
+		AccessToken      string `json:"access_token"`
+		ExpiresIn        int    `json:"expires_in"`
+		RefreshToken     string `json:"refresh_token"`
+		RefreshExpiresIn int    `json:"refresh_expires_in"`
 	}
 )
 
 func InitUserInterface(group *echo.Group) {
+	core.Init()
 	group.POST("", createUserId)
+	group.POST("/:"+userIdParam+"/login", login)
 	group.PUT("/:"+userIdParam, create)
+	group.PATCH("/:"+userIdParam+"/refresh", refreshToken, authmiddleware.CheckToken)
 }
 
 func createUserId(context echo.Context) error {
@@ -43,17 +47,11 @@ func createUserId(context echo.Context) error {
 
 func create(context echo.Context) error {
 	log.Debugf("Create user")
-	userCore, err := bind(context, new(userCreateDTO))
+	userCore, err := bindUser(context)
 	if err != nil {
-		log.Warnf("Error while binding user: %v", err)
-		return echo.ErrBadRequest
+		return err
 	}
-	userId, err := uuid.Parse(context.Param(userIdParam))
-	if err != nil {
-		log.Warnf("Error while binding userId: %v", err)
-		return echo.ErrBadRequest
-	}
-	userCore.SetId(userId)
+
 	if err := userCore.Create(); err != nil {
 		if errors.Is(err, errormessages.UserAlreadyExists) {
 			log.Warnf("User with id %s already exists", userCore.GetId())
@@ -66,24 +64,76 @@ func create(context echo.Context) error {
 	return context.NoContent(http.StatusCreated)
 }
 
-func (user *userCreateDTO) mapToUserCore() core.User {
-	return &core.UserCore{Password: user.Password}
+func refreshToken(context echo.Context) error {
+	log.Debugf("Refresh token")
+
+	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
+	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
+
+	userId, err := uuid.Parse(context.Param(userIdParam))
+	if err != nil {
+		log.Warnf("Error while binding userId: %v", err)
+		return echo.ErrBadRequest
+	}
+
+	if userId != claims.UserId {
+		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
+		return echo.ErrUnauthorized
+	}
+
+	if !ok {
+		log.Errorf("Got data of wrong type: %v", context.Get(authadapter.ClaimName))
+		return echo.ErrUnauthorized
+	}
+
+	token, err := core.CreateJWTTokenFromRefreshToken(claims.UserId, refreshToken)
+	if err != nil {
+		log.Errorf("Something went wrong while creating Token: %v", err)
+		return echo.ErrUnauthorized
+	}
+	log.Debugf("Refresh token for user %s updated", claims.UserId)
+	return context.JSON(http.StatusOK, token)
 }
 
-func (user *userLoginDTO) mapToUserCore() core.User {
-	return &core.UserCore{ID: user.ID, Password: user.Password}
+func login(context echo.Context) error {
+	log.Debugf("Login some user")
+	userCore, err := bindUser(context)
+	if err != nil {
+		return err
+	}
+
+	tokenCore, err := userCore.Login()
+	if err != nil {
+		log.Warnf("Error while logging in user %v: %v", userCore, err)
+		return echo.ErrUnauthorized
+	}
+
+	log.Debugf("Logged in user %s", userCore.GetId())
+	return context.JSON(http.StatusOK, mapToTokenResponseDTO(tokenCore))
 }
 
-func bind(context echo.Context, toBindUser user) (core.User, error) {
+func bindUser(context echo.Context) (*core.UserCore, error) {
 	log.Debugf("Bind context to user %v", context)
-	if err := context.Bind(toBindUser); err != nil {
+	authenticate := new(authenticate)
+	if err := context.Bind(authenticate); err != nil {
 		log.Warnf("Could not bind user, %v", err)
 		return nil, echo.ErrBadRequest
 	}
-	log.Debugf("User bind %v", toBindUser)
-	if err := context.Validate(toBindUser); err != nil {
+	log.Debugf("User bind %v", authenticate)
+	if err := context.Validate(authenticate); err != nil {
 		log.Warnf("Could not validate user, %v", err)
 		return nil, echo.ErrBadRequest
 	}
-	return toBindUser.mapToUserCore(), nil
+
+	userId, err := uuid.Parse(context.Param(userIdParam))
+	if err != nil {
+		log.Warnf("Error while binding userId: %v", err)
+		return nil, echo.ErrBadRequest
+	}
+	userCore := &core.UserCore{ID: userId, Password: authenticate.Password}
+	return userCore, nil
+}
+
+func mapToTokenResponseDTO(tokenCore *core.TokenCore) *tokenResponseDTO {
+	return &tokenResponseDTO{AccessToken: tokenCore.AccessToken, ExpiresIn: tokenCore.ExpiresIn, RefreshToken: tokenCore.RefreshToken, RefreshExpiresIn: tokenCore.RefreshExpiresIn}
 }
