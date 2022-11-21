@@ -18,34 +18,39 @@ const (
 	ClaimName               string = "claim"
 )
 
-type Claims struct {
-	UserId uuid.UUID `json:"user_id"`
-	jwt.StandardClaims
-}
-
-var (
-	verifyKey     *rsa.PublicKey
-	publicKeyPath string
-	authUrl       string
+type (
+	Auth interface {
+		ParseToken(authorizationString string) (*Claims, error)
+		CreateJWTToken(token string) (string, error)
+	}
+	Claims struct {
+		UserId uuid.UUID `json:"user_id"`
+		jwt.StandardClaims
+	}
+	AuthAdapter struct {
+		verifyKey     *rsa.PublicKey
+		publicKeyPath string
+		authUrl       string
+	}
 )
 
-func Init() error {
-	publicKeyPath = os.Getenv("PUBLIC_KEY_PATH")
-	authUrl = os.Getenv("AUTH_URL")
+func NewAuthAdapter() (*AuthAdapter, error) {
+	publicKeyPath := os.Getenv("PUBLIC_KEY_PATH")
+	authUrl := os.Getenv("AUTH_URL")
 	verifyBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
-		return fmt.Errorf("error while reading public Key: %v", err)
+		return nil, fmt.Errorf("error while reading public Key: %v", err)
 	}
 
-	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
+	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
 	if err != nil {
-		return fmt.Errorf("error while parsing public Key: %v", err)
+		return nil, fmt.Errorf("error while parsing public Key: %v", err)
 	}
 
-	return nil
+	return &AuthAdapter{verifyKey: verifyKey, publicKeyPath: publicKeyPath, authUrl: authUrl}, nil
 }
 
-func ParseToken(authorizationString string) (*Claims, error) {
+func (authAdapter *AuthAdapter) ParseToken(authorizationString string) (*Claims, error) {
 	splitToken := strings.Split(authorizationString, "Bearer ")
 	if len(splitToken) != 2 {
 		return nil, fmt.Errorf("token not found")
@@ -54,7 +59,7 @@ func ParseToken(authorizationString string) (*Claims, error) {
 
 	claims := &Claims{}
 	tkn, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return verifyKey, nil
+		return authAdapter.verifyKey, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("claim could not be parsed: %v", err)
@@ -67,10 +72,10 @@ func ParseToken(authorizationString string) (*Claims, error) {
 	return claims, nil
 }
 
-func CreateJWTToken(token string) (string, error) {
+func (authAdapter *AuthAdapter) CreateJWTToken(token string) (string, error) {
 	client := &http.Client{}
 
-	req, err := http.NewRequest(http.MethodGet, authUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, authAdapter.authUrl, nil)
 	if err != nil {
 		return "", err
 	}
@@ -90,7 +95,7 @@ func CreateJWTToken(token string) (string, error) {
 	}
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("body with token coulnd be read: %v", err)
+		return "", fmt.Errorf("body with token couldn't be read: %v", err)
 	}
 
 	stringToken := string(bodyBytes)

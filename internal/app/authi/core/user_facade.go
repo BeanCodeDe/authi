@@ -1,69 +1,100 @@
 package core
 
 import (
+	"crypto/rsa"
+	"errors"
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/BeanCodeDe/authi/internal/app/authi/config"
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
+	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
+	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
 
 type (
-	UserCore struct {
-		ID        uuid.UUID
-		Password  string
-		CreatedOn time.Time
-		LastLogin time.Time
-	}
-
-	User interface {
-		Create() error
-		Login() (*TokenCore, error)
-		GetId() uuid.UUID
-		SetId(uuid.UUID)
-		GetCreatedOn() time.Time
-		GetLastLogin() time.Time
+	UserFacade struct {
+		dbConnection db.Connection
+		authAdapter  authadapter.Auth
+		signKey      *rsa.PrivateKey
 	}
 )
 
-func (user *UserCore) Create() error {
+func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
+
+	signBytes, err := os.ReadFile(config.PrivateKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf("error while reading private Key: %v", err)
+	}
+
+	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(signBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error while parsing private Key: %v", err)
+	}
+
+	dbConnection, err := db.NewPostgresConnection()
+	if err != nil {
+		return nil, fmt.Errorf("error while initializing database: %v", err)
+	}
+	return &UserFacade{dbConnection, authAdapter, signKey}, nil
+}
+
+func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *AuthenticateDTO) error {
 
 	creationTime := time.Now()
-	user.CreatedOn = creationTime
-	user.LastLogin = creationTime
 
-	if err := user.mapToUserDB().Create(randomString()); err != nil {
-		return err
+	dbUser := &db.UserDB{ID: userId, Password: authenticate.Password, CreatedOn: creationTime, LastLogin: creationTime}
+
+	if err := userFacade.dbConnection.CreateUser(dbUser, randomString()); err != nil {
+		if errors.Is(err, errormessages.ErrUserAlreadyExists) {
+			return err
+		}
+		return fmt.Errorf("error while creating user: %v", err)
 	}
 
 	return nil
 }
 
-func (user *UserCore) Login() (*TokenCore, error) {
-	dbUser := user.mapToUserDB()
-	err := dbUser.LoginUser()
-	if err != nil {
-		return nil, fmt.Errorf("something went wrong when logging in user, %v: %v", user.ID, err)
+func (userFacade *UserFacade) LoginUser(userId uuid.UUID, authenticate *AuthenticateDTO) (*TokenResponseDTO, error) {
+	dbUser := &db.UserDB{ID: userId, Password: authenticate.Password}
+	if err := userFacade.dbConnection.LoginUser(dbUser); err != nil {
+		return nil, fmt.Errorf("something went wrong when logging in user, %v: %v", userId, err)
 	}
-	return createJWTToken(user.ID)
+	return userFacade.createJWTToken(userId)
 }
 
-func (user *UserCore) GetId() uuid.UUID {
-	return user.ID
+func (userFacade *UserFacade) RefreshToken(userId uuid.UUID, refreshToken string) (*TokenResponseDTO, error) {
+	if err := userFacade.dbConnection.CheckRefreshToken(userId, refreshToken); err != nil {
+		return nil, fmt.Errorf("no user with refresh token was found: %v", err)
+	}
+
+	return userFacade.createJWTToken(userId)
 }
 
-func (user *UserCore) SetId(userId uuid.UUID) {
-	user.ID = userId
-}
+func (userFacade *UserFacade) createJWTToken(userId uuid.UUID) (*TokenResponseDTO, error) {
 
-func (user *UserCore) GetCreatedOn() time.Time {
-	return user.CreatedOn
-}
+	tokenExpireAt := time.Now().Add(5 * time.Minute).Unix()
+	refreshTokenExpireAt := time.Now().Add(10 * time.Minute)
 
-func (user *UserCore) GetLastLogin() time.Time {
-	return user.LastLogin
-}
+	claimsToken := &authadapter.Claims{
+		UserId: userId,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: tokenExpireAt,
+		},
+	}
 
-func (user *UserCore) mapToUserDB() *db.UserDB {
-	return &db.UserDB{ID: user.ID, Password: user.Password, CreatedOn: user.CreatedOn, LastLogin: user.LastLogin}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claimsToken)
+	signedToken, err := token.SignedString(userFacade.signKey)
+	if err != nil {
+		return nil, fmt.Errorf("token creation failed: %v", err)
+	}
+
+	refreshToken := randomString()
+	if err = userFacade.dbConnection.UpdateRefreshToken(userId, refreshToken, refreshTokenExpireAt); err != nil {
+		return nil, fmt.Errorf("refresh token could not be saved into database: %v", err)
+	}
+	return &TokenResponseDTO{AccessToken: signedToken, ExpiresIn: int(tokenExpireAt), RefreshToken: refreshToken, RefreshExpiresIn: int(refreshTokenExpireAt.Unix())}, nil
 }

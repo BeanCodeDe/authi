@@ -2,69 +2,60 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/pkg/authadapter"
-	"github.com/BeanCodeDe/authi/pkg/authmiddleware"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	UserRootPath = "/user"
-	userIdParam  = "userId"
-)
-
 type (
-	authenticate struct {
-		Password string `json:"password" validate:"required"`
-	}
-
-	tokenResponseDTO struct {
-		AccessToken      string `json:"access_token"`
-		ExpiresIn        int    `json:"expires_in"`
-		RefreshToken     string `json:"refresh_token"`
-		RefreshExpiresIn int    `json:"refresh_expires_in"`
+	UserApi struct {
+		facade core.Facade
 	}
 )
 
-func InitUserInterface(group *echo.Group) {
-	core.Init()
-	group.POST("", createUserId)
-	group.POST("/:"+userIdParam+"/login", login)
-	group.PUT("/:"+userIdParam, create)
-	group.PATCH("/:"+userIdParam+"/refresh", refreshToken, authmiddleware.CheckToken)
+const userIdParam = "userId"
+
+func NewUserApi(auth authadapter.Auth) (*UserApi, error) {
+	userFacade, err := core.NewUserFacade(auth)
+	if err != nil {
+		return nil, fmt.Errorf("error while initializing user facade: %v", err)
+	}
+	return &UserApi{userFacade}, nil
 }
 
-func createUserId(context echo.Context) error {
+func (userApi *UserApi) CreateUserId(context echo.Context) error {
 	log.Debug("Create User")
 	return context.String(http.StatusOK, uuid.NewString())
 }
 
-func create(context echo.Context) error {
+func (userApi *UserApi) CreateUser(context echo.Context) error {
 	log.Debugf("Create user")
-	userCore, err := bindUser(context)
+	userId, authenticate, err := userApi.bindUser(context)
 	if err != nil {
 		return err
 	}
 
-	if err := userCore.Create(); err != nil {
-		if errors.Is(err, errormessages.UserAlreadyExists) {
-			log.Warnf("User with id %s already exists", userCore.GetId())
+	if err := userApi.facade.CreateUser(userId, authenticate); err != nil {
+		if errors.Is(err, errormessages.ErrUserAlreadyExists) {
+			log.Warnf("User with id %s already exists", userId)
 			return context.NoContent(http.StatusConflict)
 		}
-		return err
+		log.Warnf("Error while creating user: %v", err)
+		return echo.ErrInternalServerError
 	}
 
-	log.Debugf("Created user with id %s", userCore.GetId())
+	log.Debugf("Created user with id %s", userId)
 	return context.NoContent(http.StatusCreated)
 }
 
-func refreshToken(context echo.Context) error {
+func (userApi *UserApi) RefreshToken(context echo.Context) error {
 	log.Debugf("Refresh token")
 
 	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
@@ -86,7 +77,7 @@ func refreshToken(context echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 
-	token, err := core.CreateJWTTokenFromRefreshToken(claims.UserId, refreshToken)
+	token, err := userApi.facade.RefreshToken(claims.UserId, refreshToken)
 	if err != nil {
 		log.Errorf("Something went wrong while creating Token: %v", err)
 		return echo.ErrUnauthorized
@@ -95,45 +86,40 @@ func refreshToken(context echo.Context) error {
 	return context.JSON(http.StatusOK, token)
 }
 
-func login(context echo.Context) error {
+func (userApi *UserApi) LoginUser(context echo.Context) error {
 	log.Debugf("Login some user")
-	userCore, err := bindUser(context)
+	userId, authenticate, err := userApi.bindUser(context)
 	if err != nil {
 		return err
 	}
 
-	tokenCore, err := userCore.Login()
+	token, err := userApi.facade.LoginUser(userId, authenticate)
 	if err != nil {
-		log.Warnf("Error while logging in user %v: %v", userCore, err)
+		log.Warnf("Error while logging in user %v: %v", userId, err)
 		return echo.ErrUnauthorized
 	}
 
-	log.Debugf("Logged in user %s", userCore.GetId())
-	return context.JSON(http.StatusOK, mapToTokenResponseDTO(tokenCore))
+	log.Debugf("Logged in user %s", userId)
+	return context.JSON(http.StatusOK, token)
 }
 
-func bindUser(context echo.Context) (*core.UserCore, error) {
+func (userApi *UserApi) bindUser(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
 	log.Debugf("Bind context to user %v", context)
-	authenticate := new(authenticate)
+	authenticate := new(core.AuthenticateDTO)
 	if err := context.Bind(authenticate); err != nil {
 		log.Warnf("Could not bind user, %v", err)
-		return nil, echo.ErrBadRequest
+		return uuid.Nil, nil, echo.ErrBadRequest
 	}
 	log.Debugf("User bind %v", authenticate)
 	if err := context.Validate(authenticate); err != nil {
 		log.Warnf("Could not validate user, %v", err)
-		return nil, echo.ErrBadRequest
+		return uuid.Nil, nil, echo.ErrBadRequest
 	}
 
 	userId, err := uuid.Parse(context.Param(userIdParam))
 	if err != nil {
 		log.Warnf("Error while binding userId: %v", err)
-		return nil, echo.ErrBadRequest
+		return uuid.Nil, nil, echo.ErrBadRequest
 	}
-	userCore := &core.UserCore{ID: userId, Password: authenticate.Password}
-	return userCore, nil
-}
-
-func mapToTokenResponseDTO(tokenCore *core.TokenCore) *tokenResponseDTO {
-	return &tokenResponseDTO{AccessToken: tokenCore.AccessToken, ExpiresIn: tokenCore.ExpiresIn, RefreshToken: tokenCore.RefreshToken, RefreshExpiresIn: tokenCore.RefreshExpiresIn}
+	return userId, authenticate, nil
 }

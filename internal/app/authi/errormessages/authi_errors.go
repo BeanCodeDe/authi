@@ -1,7 +1,9 @@
 package errormessages
 
-import "fmt"
+import (
+	"errors"
+)
 
 var (
-	UserAlreadyExists = fmt.Errorf("user already exists")
+	ErrUserAlreadyExists = errors.New("user already exists")
 )

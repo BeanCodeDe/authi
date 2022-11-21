@@ -1,40 +1,24 @@
 package db
 
 import (
-	"context"
-	"fmt"
-	"os"
+	"time"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/config"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/google/uuid"
 )
 
-var dbpool *pgxpool.Pool
-
-func Init() {
-
-	user := config.PostgresUser
-	name := config.PostgresDB
-	password := config.PostgresPassword
-	host := config.PostgresHost
-	port := config.PostgresPort
-
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, name)
-	var err error
-	dbpool, err = pgxpool.Connect(context.Background(), psqlInfo)
-	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
-		os.Exit(1)
+type (
+	UserDB struct {
+		ID        uuid.UUID `db:"id"`
+		Password  string    `db:"password"`
+		CreatedOn time.Time `db:"created_on"`
+		LastLogin time.Time `db:"last_login"`
 	}
-}
-
-func Close() {
-	dbpool.Close()
-}
-
-func getConnection() *pgxpool.Pool {
-	return dbpool
-}
+	Connection interface {
+		Close()
+		CreateUser(user *UserDB, hash string) error
+		UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error
+		GetUserById(userId uuid.UUID) (*UserDB, error)
+		LoginUser(user *UserDB) error
+		CheckRefreshToken(userId uuid.UUID, refreshToken string) error
+	}
+)
