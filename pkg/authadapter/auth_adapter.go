@@ -24,15 +24,15 @@ type Claims struct {
 }
 
 var (
-	verifyKey      *rsa.PublicKey
-	pubblicKeyPath string
-	authUrl        string
+	verifyKey     *rsa.PublicKey
+	publicKeyPath string
+	authUrl       string
 )
 
 func Init() error {
-	pubblicKeyPath = os.Getenv("PUBLIC_KEY_PATH")
+	publicKeyPath = os.Getenv("PUBLIC_KEY_PATH")
 	authUrl = os.Getenv("AUTH_URL")
-	verifyBytes, err := os.ReadFile(pubblicKeyPath)
+	verifyBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
 		return fmt.Errorf("error while reading public Key: %v", err)
 	}
