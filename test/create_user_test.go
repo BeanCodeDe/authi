@@ -11,14 +11,14 @@ import (
 
 func TestCreateId(t *testing.T) {
 	userId, status := util.CreateUserId()
-	assert.Equal(t, status, http.StatusOK)
+	assert.Equal(t, status, http.StatusCreated)
 	_, err := uuid.Parse(userId)
 	assert.Equal(t, err, nil)
 }
 
 func TestCreateUser(t *testing.T) {
 	userId, status := util.CreateUserId()
-	assert.Equal(t, status, http.StatusOK)
+	assert.Equal(t, status, http.StatusCreated)
 	_, err := uuid.Parse(userId)
 	assert.Equal(t, err, nil)
 
@@ -28,7 +28,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestCreateUserRetry(t *testing.T) {
 	userId, status := util.CreateUserId()
-	assert.Equal(t, status, http.StatusOK)
+	assert.Equal(t, status, http.StatusCreated)
 	_, err := uuid.Parse(userId)
 	assert.Equal(t, err, nil)
 

@@ -48,7 +48,7 @@ func sendCreateUserRequest(id string, userCreateJson string) *http.Response {
 func CreateUserId() (string, int) {
 	response := sendCreateUserIdRequest()
 	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
+	if response.StatusCode != http.StatusCreated {
 		return "", response.StatusCode
 	}
 
@@ -71,7 +71,7 @@ func CreateUser(id string, password string) int {
 
 func CreateUserForFurtherTesting(t *testing.T) string {
 	userId, status := CreateUserId()
-	assert.Equal(t, status, http.StatusOK)
+	assert.Equal(t, status, http.StatusCreated)
 	_, err := uuid.Parse(userId)
 	assert.Equal(t, err, nil)
 
