@@ -18,7 +18,6 @@ jobs:
         run: go test ./internal/... -v
 
   journey_test:
-    needs: [unit_test]
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +34,7 @@ jobs:
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose.yml down
   
   build:
-    needs: [journey_test]
+    needs: [unit_test, journey_test]
     runs-on: ubuntu-latest
 
     steps:
