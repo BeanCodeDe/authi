@@ -61,7 +61,7 @@ func (userApi *UserApi) CreateUserId(context echo.Context) error {
 
 func (userApi *UserApi) CreateUser(context echo.Context) error {
 	log.Debugf("Create user")
-	userId, authenticate, err := userApi.bindUser(context)
+	userId, authenticate, err := userApi.bindAuthenticate(context)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (userApi *UserApi) RefreshToken(context echo.Context) error {
 
 func (userApi *UserApi) LoginUser(context echo.Context) error {
 	log.Debugf("Login some user")
-	userId, authenticate, err := userApi.bindUser(context)
+	userId, authenticate, err := userApi.bindAuthenticate(context)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 	return context.JSON(http.StatusOK, token)
 }
 
-func (userApi *UserApi) bindUser(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
+func (userApi *UserApi) bindAuthenticate(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
 	log.Debugf("Bind context to user %v", context)
 	authenticate := new(core.AuthenticateDTO)
 	if err := context.Bind(authenticate); err != nil {
