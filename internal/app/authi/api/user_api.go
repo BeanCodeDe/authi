@@ -8,31 +8,55 @@ import (
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/authmiddleware"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-
+	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type (
 	UserApi struct {
 		facade core.Facade
 	}
+
+	CustomValidator struct {
+		validator *validator.Validate
+	}
 )
 
-const userIdParam = "userId"
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
 
 func NewUserApi(auth authadapter.Auth) (*UserApi, error) {
 	userFacade, err := core.NewUserFacade(auth)
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing user facade: %v", err)
 	}
-	return &UserApi{userFacade}, nil
+
+	authMiddleware := authmiddleware.NewAuthmiddleware(auth)
+	api := &UserApi{userFacade}
+
+	e := echo.New()
+	e.Use(middleware.CORS())
+	e.Validator = &CustomValidator{validator: validator.New()}
+
+	userGroup := e.Group(userRootPath)
+	userGroup.POST("", api.CreateUserId)
+	userGroup.POST("/:"+userIdParam+userLoginPath, api.LoginUser)
+	userGroup.PUT("/:"+userIdParam, api.CreateUser)
+	userGroup.PATCH("/:"+userIdParam+userRefreshPath, api.RefreshToken, authMiddleware.CheckToken)
+
+	e.Logger.Fatal(e.Start(":1203"))
+
+	return api, nil
 }
 
 func (userApi *UserApi) CreateUserId(context echo.Context) error {
 	log.Debug("Create User")
-	return context.String(http.StatusOK, uuid.NewString())
+	return context.String(http.StatusCreated, uuid.NewString())
 }
 
 func (userApi *UserApi) CreateUser(context echo.Context) error {

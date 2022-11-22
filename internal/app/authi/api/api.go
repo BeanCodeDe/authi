@@ -10,3 +10,10 @@ type (
 		LoginUser(context echo.Context) error
 	}
 )
+
+const (
+	userRootPath    = "/user"
+	userIdParam     = "userId"
+	userLoginPath   = "/login"
+	userRefreshPath = "/refresh"
+)
