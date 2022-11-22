@@ -69,7 +69,7 @@ func (userApi *UserApi) CreateUser(context echo.Context) error {
 	if err := userApi.facade.CreateUser(userId, authenticate); err != nil {
 		if errors.Is(err, errormessages.ErrUserAlreadyExists) {
 			log.Warnf("User with id %s already exists", userId)
-			return context.NoContent(http.StatusConflict)
+			return echo.NewHTTPError(http.StatusConflict)
 		}
 		log.Warnf("Error while creating user: %v", err)
 		return echo.ErrInternalServerError
@@ -128,15 +128,15 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 }
 
 func (userApi *UserApi) bindAuthenticate(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
-	log.Debugf("Bind context to user %v", context)
+	log.Debugf("Bind context to auth %v", context)
 	authenticate := new(core.AuthenticateDTO)
 	if err := context.Bind(authenticate); err != nil {
-		log.Warnf("Could not bind user, %v", err)
+		log.Warnf("Could not bind auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
-	log.Debugf("User bind %v", authenticate)
+	log.Debugf("Auth bind %v", authenticate)
 	if err := context.Validate(authenticate); err != nil {
-		log.Warnf("Could not validate user, %v", err)
+		log.Warnf("Could not validate auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
 
