@@ -79,37 +79,6 @@ func (userApi *UserApi) CreateUser(context echo.Context) error {
 	return context.NoContent(http.StatusCreated)
 }
 
-func (userApi *UserApi) RefreshToken(context echo.Context) error {
-	log.Debugf("Refresh token")
-
-	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
-	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
-
-	userId, err := uuid.Parse(context.Param(userIdParam))
-	if err != nil {
-		log.Warnf("Error while binding userId: %v", err)
-		return echo.ErrBadRequest
-	}
-
-	if userId != claims.UserId {
-		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
-		return echo.ErrUnauthorized
-	}
-
-	if !ok {
-		log.Errorf("Got data of wrong type: %v", context.Get(authadapter.ClaimName))
-		return echo.ErrUnauthorized
-	}
-
-	token, err := userApi.facade.RefreshToken(claims.UserId, refreshToken)
-	if err != nil {
-		log.Errorf("Something went wrong while creating Token: %v", err)
-		return echo.ErrUnauthorized
-	}
-	log.Debugf("Refresh token for user %s updated", claims.UserId)
-	return context.JSON(http.StatusOK, token)
-}
-
 func (userApi *UserApi) LoginUser(context echo.Context) error {
 	log.Debugf("Login some user")
 	userId, authenticate, err := userApi.bindAuthenticate(context)
@@ -124,6 +93,37 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 	}
 
 	log.Debugf("Logged in user %s", userId)
+	return context.JSON(http.StatusOK, token)
+}
+
+func (userApi *UserApi) RefreshToken(context echo.Context) error {
+	log.Debugf("Refresh token")
+
+	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
+	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
+
+	if !ok {
+		log.Errorf("Got data of wrong type: %v", context.Get(authadapter.ClaimName))
+		return echo.ErrUnauthorized
+	}
+
+	userId, err := uuid.Parse(context.Param(userIdParam))
+	if err != nil {
+		log.Warnf("Error while binding userId: %v", err)
+		return echo.ErrBadRequest
+	}
+
+	if userId != claims.UserId {
+		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
+		return echo.ErrUnauthorized
+	}
+
+	token, err := userApi.facade.RefreshToken(claims.UserId, refreshToken)
+	if err != nil {
+		log.Errorf("Something went wrong while creating Token: %v", err)
+		return echo.ErrUnauthorized
+	}
+	log.Debugf("Refresh token for user %s updated", claims.UserId)
 	return context.JSON(http.StatusOK, token)
 }
 

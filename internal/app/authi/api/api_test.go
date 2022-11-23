@@ -64,7 +64,10 @@ var (
 	authenticationUserWrongJson   = "xyz"
 	authenticationUserInvalidJson = `{"password":""}`
 	claimUser                     = authadapter.Claims{UserId: userId}
+	wrongClaimFormat              = &UserApi{}
 )
+
+// CreateUserId Tests
 
 func TestCreateUserId_Successfully(t *testing.T) {
 	userApi := &UserApi{&facadeMock{t: t}}
@@ -79,6 +82,8 @@ func TestCreateUserId_Successfully(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 	}
 }
+
+// CreateUser Tests
 
 func TestCreateUser_Successfully(t *testing.T) {
 	facade := &facadeMock{t: t}
@@ -231,6 +236,8 @@ func (facadeMock *facadeErrorMock) CreateUser(userId uuid.UUID, authenticate *co
 	return echo.ErrInternalServerError
 }
 
+// LoginUser Tests
+
 func TestLoginUser_Successfully(t *testing.T) {
 	facade := &facadeMock{t: t}
 	userApi := &UserApi{facade}
@@ -359,6 +366,8 @@ func (facadeMock *facadeErrorMock) LoginUser(userId uuid.UUID, authenticate *cor
 	return nil, echo.ErrInternalServerError
 }
 
+// RefreshToken Tests
+
 func TestRefreshToken_Successfully(t *testing.T) {
 	facade := &facadeMock{t: t}
 	userApi := &UserApi{facade}
@@ -384,6 +393,72 @@ func TestRefreshToken_Successfully(t *testing.T) {
 	}
 }
 
+func TestRefreshToken_ParseClaim_Invalid(t *testing.T) {
+	facade := &facadeMock{t: t}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam + userRefreshPath)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	c.Set(authadapter.ClaimName, wrongClaimFormat)
+	// Assertions
+	if assert.Equal(t, echo.ErrUnauthorized, userApi.RefreshToken(c)) {
+		assert.Equal(t, 0, len(facade.refreshUserRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+	}
+}
+
+func TestRefreshToken_ParseUserIdParam_Invalid(t *testing.T) {
+	facade := &facadeMock{t: t}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam + userRefreshPath)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(wrongUUID)
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.Equal(t, echo.ErrBadRequest, userApi.RefreshToken(c)) {
+		assert.Equal(t, 0, len(facade.refreshUserRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+	}
+}
+
+func TestRefreshToken_CheckUserId_Invalid(t *testing.T) {
+	facade := &facadeMock{t: t}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam + userRefreshPath)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(uuid.NewString())
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.Equal(t, echo.ErrUnauthorized, userApi.RefreshToken(c)) {
+		assert.Equal(t, 0, len(facade.refreshUserRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+	}
+}
+
 func (facadeMock *facadeMock) RefreshToken(userId uuid.UUID, refreshToken string) (*core.TokenResponseDTO, error) {
 	refreshUserRecord := &refreshUserRecord{userId, refreshToken}
 	facadeMock.refreshUserRecordArray = append(facadeMock.refreshUserRecordArray, refreshUserRecord)
@@ -391,13 +466,36 @@ func (facadeMock *facadeMock) RefreshToken(userId uuid.UUID, refreshToken string
 }
 
 func (facadeMock *facadeDuplicateMock) RefreshToken(userId uuid.UUID, refreshToken string) (*core.TokenResponseDTO, error) {
-	refreshUserRecord := &refreshUserRecord{userId, refreshToken}
-	facadeMock.refreshUserRecordArray = append(facadeMock.refreshUserRecordArray, refreshUserRecord)
-	return successfullyTokenResponse, nil
+	assert.Fail(facadeMock.t, "Login user of facade duplicate mock shouldn't be access")
+	return nil, nil
+}
+
+func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
+	facade := &facadeErrorMock{t: t}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam + userRefreshPath)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.Equal(t, echo.ErrUnauthorized, userApi.RefreshToken(c)) {
+		assert.Equal(t, 1, len(facade.refreshUserRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, userId, facade.refreshUserRecordArray[0].userId)
+		assert.Equal(t, refreshToken, facade.refreshUserRecordArray[0].token)
+	}
 }
 
 func (facadeMock *facadeErrorMock) RefreshToken(userId uuid.UUID, refreshToken string) (*core.TokenResponseDTO, error) {
 	refreshUserRecord := &refreshUserRecord{userId, refreshToken}
 	facadeMock.refreshUserRecordArray = append(facadeMock.refreshUserRecordArray, refreshUserRecord)
-	return successfullyTokenResponse, nil
+	return nil, echo.ErrInternalServerError
 }
