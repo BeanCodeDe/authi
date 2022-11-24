@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/config"
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/pkg/authadapter"
@@ -24,8 +23,21 @@ type (
 )
 
 func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
+	signKey, err := loadSignKey()
+	if err != nil {
+		return nil, err
+	}
 
-	signBytes, err := os.ReadFile(config.PrivateKeyPath)
+	dbConnection, err := db.NewPostgresConnection()
+	if err != nil {
+		return nil, fmt.Errorf("error while initializing database: %v", err)
+	}
+	return &UserFacade{dbConnection, authAdapter, signKey}, nil
+}
+
+func loadSignKey() (*rsa.PrivateKey, error) {
+	path := os.Getenv("PRIVATE_KEY_PATH")
+	signBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("error while reading private Key: %v", err)
 	}
@@ -35,11 +47,7 @@ func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
 		return nil, fmt.Errorf("error while parsing private Key: %v", err)
 	}
 
-	dbConnection, err := db.NewPostgresConnection()
-	if err != nil {
-		return nil, fmt.Errorf("error while initializing database: %v", err)
-	}
-	return &UserFacade{dbConnection, authAdapter, signKey}, nil
+	return signKey, nil
 }
 
 func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *AuthenticateDTO) error {
