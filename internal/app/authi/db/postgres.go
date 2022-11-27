@@ -65,30 +65,6 @@ func (connection *PostgresConnection) UpdateRefreshToken(userId uuid.UUID, refre
 	return nil
 }
 
-func (connection *PostgresConnection) GetUserById(userId uuid.UUID) (*UserDB, error) {
-	var users []*UserDB
-	if err := pgxscan.Select(context.Background(), connection.dbPool, &users, `SELECT id,created_on,last_login FROM auth.user WHERE id = $1`, userId); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			switch pgErr.Code {
-			case pgerrcode.NoDataFound:
-				return nil, fmt.Errorf("user with id %s not found", userId)
-			}
-		}
-		return nil, fmt.Errorf("unknown error when getting user by name: %v", err)
-	}
-
-	if len(users) == 0 {
-		return nil, fmt.Errorf("user with id %s not found", userId)
-	}
-
-	if len(users) != 1 {
-		return nil, fmt.Errorf("cant find only one user. Len: %v, Userlist: %v", len(users), users)
-	}
-
-	return users[0], nil
-}
-
 func (connection *PostgresConnection) LoginUser(user *UserDB) error {
 
 	var users []*UserDB

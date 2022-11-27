@@ -17,7 +17,6 @@ type (
 		Close()
 		CreateUser(user *UserDB, hash string) error
 		UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error
-		GetUserById(userId uuid.UUID) (*UserDB, error)
 		LoginUser(user *UserDB) error
 		CheckRefreshToken(userId uuid.UUID, refreshToken string) error
 	}

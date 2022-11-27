@@ -17,7 +17,6 @@ import (
 type (
 	UserFacade struct {
 		dbConnection db.Connection
-		authAdapter  authadapter.Auth
 		signKey      *rsa.PrivateKey
 	}
 )
@@ -26,7 +25,7 @@ const (
 	PRIVATE_KEY_PATH_ENV = "PRIVATE_KEY_PATH"
 )
 
-func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
+func NewUserFacade() (*UserFacade, error) {
 	signKey, err := loadSignKey()
 	if err != nil {
 		return nil, err
@@ -36,7 +35,7 @@ func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing database: %v", err)
 	}
-	return &UserFacade{dbConnection, authAdapter, signKey}, nil
+	return &UserFacade{dbConnection, signKey}, nil
 }
 
 func loadSignKey() (*rsa.PrivateKey, error) {

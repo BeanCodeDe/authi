@@ -31,7 +31,7 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 }
 
 func NewUserApi(auth authadapter.Auth) (*UserApi, error) {
-	userFacade, err := core.NewUserFacade(auth)
+	userFacade, err := core.NewUserFacade()
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing user facade: %v", err)
 	}
