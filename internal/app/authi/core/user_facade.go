@@ -22,6 +22,10 @@ type (
 	}
 )
 
+const (
+	PRIVATE_KEY_PATH_ENV = "PRIVATE_KEY_PATH"
+)
+
 func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
 	signKey, err := loadSignKey()
 	if err != nil {
@@ -36,7 +40,7 @@ func NewUserFacade(authAdapter authadapter.Auth) (*UserFacade, error) {
 }
 
 func loadSignKey() (*rsa.PrivateKey, error) {
-	path := os.Getenv("PRIVATE_KEY_PATH")
+	path := os.Getenv(PRIVATE_KEY_PATH_ENV)
 	signBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("error while reading private Key: %v", err)

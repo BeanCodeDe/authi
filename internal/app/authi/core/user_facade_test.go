@@ -61,8 +61,10 @@ type (
 )
 
 var (
-	userId       = uuid.New()
-	authenticate = &AuthenticateDTO{}
+	userId         = uuid.New()
+	refreshToken   = "someRefreshToken"
+	authenticate   = &AuthenticateDTO{}
+	privateKeyPath = "../../../../deployments/token/privat/jwtRS256.key"
 )
 
 func (connection *ConnectionMock) Close() {
@@ -99,10 +101,57 @@ func (connection *ConnectionMock) CreateUser(user *db.UserDB, hash string) error
 	return nil
 }
 
+// Test refresh token
+
+func TestRefreshToken_Successfully(t *testing.T) {
+	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
+	dbConnection := &ConnectionMock{t: t}
+	auth := &AuthMock{t: t}
+
+	signKey, err := loadSignKey()
+	assert.Nil(t, err)
+	userFacade := &UserFacade{dbConnection: dbConnection, authAdapter: auth, signKey: signKey}
+
+	tokenResponseDTO, err := userFacade.RefreshToken(userId, refreshToken)
+	if assert.Nil(t, err) {
+		assert.Equal(t, 0, len(dbConnection.closeRecordArray))
+		assert.Equal(t, 0, len(dbConnection.createUserRecordArray))
+		assert.Equal(t, 1, len(dbConnection.updateRefreshTokenRecordArray))
+		assert.Equal(t, 0, len(dbConnection.getUserByIdRecordArray))
+		assert.Equal(t, 0, len(dbConnection.loginUserRecordArray))
+		assert.Equal(t, 1, len(dbConnection.checkRefreshTokenRecordArray))
+		assert.Equal(t, 0, len(auth.parseTokenRecordArray))
+		assert.Equal(t, 0, len(auth.createJWTTokenRecordArray))
+
+		assert.Equal(t, userId, dbConnection.checkRefreshTokenRecordArray[0].userId)
+		assert.Equal(t, refreshToken, dbConnection.checkRefreshTokenRecordArray[0].refreshToken)
+
+		assert.Equal(t, userId, dbConnection.updateRefreshTokenRecordArray[0].userId)
+		assert.Len(t, dbConnection.updateRefreshTokenRecordArray[0].refreshToken, 32)
+		assert.Less(t, time.Now(), dbConnection.updateRefreshTokenRecordArray[0].refreshTokenExpireAt)
+
+		assert.Regexp(t, "([a-zA-Z0-9_=]+).([a-zA-Z0-9_=]+).([a-zA-Z0-9_=]*)", tokenResponseDTO.AccessToken)
+		assert.Less(t, int(time.Now().Unix()), tokenResponseDTO.ExpiresIn)
+		assert.Equal(t, dbConnection.updateRefreshTokenRecordArray[0].refreshToken, tokenResponseDTO.RefreshToken)
+		assert.Equal(t, int(dbConnection.updateRefreshTokenRecordArray[0].refreshTokenExpireAt.Unix()), tokenResponseDTO.RefreshExpiresIn)
+	}
+}
+
+func (connection *ConnectionMock) UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
+	updateRefreshToken := &updateRefreshTokenRecord{userId: userId, refreshToken: refreshToken, refreshTokenExpireAt: refreshTokenExpireAt}
+	connection.updateRefreshTokenRecordArray = append(connection.updateRefreshTokenRecordArray, updateRefreshToken)
+	return nil
+}
+func (connection *ConnectionMock) GetUserById(userId uuid.UUID) (*db.UserDB, error) {
+	getUserByIdRecord := &getUserByIdRecord{userId: userId}
+	connection.getUserByIdRecordArray = append(connection.getUserByIdRecordArray, getUserByIdRecord)
+	return &db.UserDB{}, nil
+}
+
 // LoginUser Test
 
 func TestLoginUser_Successfully(t *testing.T) {
-	t.Setenv("PRIVATE_KEY_PATH", "../../../../deployments/token/privat/jwtRS256.key")
+	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
 	dbConnection := &ConnectionMock{t: t}
 	auth := &AuthMock{t: t}
 
@@ -136,16 +185,6 @@ func TestLoginUser_Successfully(t *testing.T) {
 	}
 }
 
-func (connection *ConnectionMock) UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
-	updateRefreshToken := &updateRefreshTokenRecord{userId: userId, refreshToken: refreshToken, refreshTokenExpireAt: refreshTokenExpireAt}
-	connection.updateRefreshTokenRecordArray = append(connection.updateRefreshTokenRecordArray, updateRefreshToken)
-	return nil
-}
-func (connection *ConnectionMock) GetUserById(userId uuid.UUID) (*db.UserDB, error) {
-	getUserByIdRecord := &getUserByIdRecord{userId: userId}
-	connection.getUserByIdRecordArray = append(connection.getUserByIdRecordArray, getUserByIdRecord)
-	return &db.UserDB{}, nil
-}
 func (connection *ConnectionMock) LoginUser(user *db.UserDB) error {
 	loginUserRecord := &loginUserRecord{user: user}
 	connection.loginUserRecordArray = append(connection.loginUserRecordArray, loginUserRecord)
