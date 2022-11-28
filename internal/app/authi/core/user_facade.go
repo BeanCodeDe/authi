@@ -85,6 +85,20 @@ func (userFacade *UserFacade) RefreshToken(userId uuid.UUID, refreshToken string
 	return userFacade.createJWTToken(userId)
 }
 
+func (userFacade *UserFacade) UpdatePassword(userId uuid.UUID, authenticate *AuthenticateDTO) error {
+	if err := userFacade.dbConnection.UpdatePassword(userId, authenticate.Password, randomString()); err != nil {
+		return fmt.Errorf("error while updating password of user: %v", err)
+	}
+	return nil
+}
+
+func (userFacade *UserFacade) DeleteUser(userId uuid.UUID) error {
+	if err := userFacade.dbConnection.DeleteUser(userId); err != nil {
+		return fmt.Errorf("error while deleting user: %v", err)
+	}
+	return nil
+}
+
 func (userFacade *UserFacade) createJWTToken(userId uuid.UUID) (*TokenResponseDTO, error) {
 
 	tokenExpireAt := time.Now().Add(5 * time.Minute).Unix()

@@ -22,6 +22,8 @@ type (
 		CreateUser(userId uuid.UUID, authenticate *AuthenticateDTO) error
 		LoginUser(userId uuid.UUID, authenticate *AuthenticateDTO) (*TokenResponseDTO, error)
 		RefreshToken(userId uuid.UUID, refreshToken string) (*TokenResponseDTO, error)
+		UpdatePassword(userId uuid.UUID, authenticate *AuthenticateDTO) error
+		DeleteUser(userId uuid.UUID) error
 	}
 )
 

@@ -60,7 +60,7 @@ func (connection *PostgresConnection) CreateUser(user *UserDB, hash string) erro
 
 func (connection *PostgresConnection) UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
 	if _, err := connection.dbPool.Exec(context.Background(), "UPDATE auth.user SET refresh_token=$1, refresh_token_expire=$2 WHERE id=$3", refreshToken, refreshTokenExpireAt, userId); err != nil {
-		return fmt.Errorf("unknown error when updating refresh token of user %s user: %v", userId, err)
+		return fmt.Errorf("unknown error when updating refresh token of user %s error: %v", userId, err)
 	}
 	return nil
 }
@@ -115,5 +115,19 @@ func (connection *PostgresConnection) CheckRefreshToken(userId uuid.UUID, refres
 		return fmt.Errorf("cant find only one user. Len: %v, Userlist: %v", len(users), users)
 	}
 
+	return nil
+}
+
+func (connection *PostgresConnection) UpdatePassword(userId uuid.UUID, password string, hash string) error {
+	if _, err := connection.dbPool.Exec(context.Background(), "UPDATE auth.user SET password=$1, salt=$2 WHERE id=$3", password+hash, hash, userId); err != nil {
+		return fmt.Errorf("unknown error when updating password of user %s error: %v", userId, err)
+	}
+	return nil
+}
+
+func (connection *PostgresConnection) DeleteUser(userId uuid.UUID) error {
+	if _, err := connection.dbPool.Exec(context.Background(), "DELETE FROM auth.user WHERE id=$1", userId); err != nil {
+		return fmt.Errorf("unknown error when deleting user %s error: %v", userId, err)
+	}
 	return nil
 }

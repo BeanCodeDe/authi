@@ -8,6 +8,9 @@ app.build:
 	go mod download
 	go build -o $(APP_NAME) $(SRC_PATH)
 
+app.ut.run:
+	go test ./internal/... -v
+
 app.jt.run:
 	docker compose --env-file $(ENV_CONFIG) --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate -d
 	go test ./test

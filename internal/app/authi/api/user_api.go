@@ -48,6 +48,8 @@ func NewUserApi(auth authadapter.Auth) (*UserApi, error) {
 	userGroup.POST("/:"+userIdParam+userLoginPath, api.LoginUser)
 	userGroup.PUT("/:"+userIdParam, api.CreateUser)
 	userGroup.PATCH("/:"+userIdParam+userRefreshPath, api.RefreshToken, authMiddleware.CheckToken)
+	userGroup.PATCH("/:"+userIdParam, api.UpdatePassword, authMiddleware.CheckToken)
+	userGroup.DELETE("/:"+userIdParam, api.DeleteUser, authMiddleware.CheckToken)
 
 	e.Logger.Fatal(e.Start(":1203"))
 
@@ -86,6 +88,11 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 		return err
 	}
 
+	err = userApi.checkUserId(context, userId)
+	if err != nil {
+		return err
+	}
+
 	token, err := userApi.facade.LoginUser(userId, authenticate)
 	if err != nil {
 		log.Warnf("Error while logging in user %v: %v", userId, err)
@@ -99,13 +106,52 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 func (userApi *UserApi) RefreshToken(context echo.Context) error {
 	log.Debugf("Refresh token")
 
-	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
-	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
+	userId, err := uuid.Parse(context.Param(userIdParam))
+	if err != nil {
+		log.Warnf("Error while binding userId: %v", err)
+		return echo.ErrBadRequest
+	}
 
-	if !ok {
-		log.Errorf("Got data of wrong type: %v", context.Get(authadapter.ClaimName))
+	err = userApi.checkUserId(context, userId)
+	if err != nil {
+		return err
+	}
+
+	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
+
+	token, err := userApi.facade.RefreshToken(userId, refreshToken)
+	if err != nil {
+		log.Errorf("Something went wrong while creating Token: %v", err)
 		return echo.ErrUnauthorized
 	}
+	log.Debugf("Refresh token for user %s updated", userId)
+	return context.JSON(http.StatusOK, token)
+}
+
+func (userApi *UserApi) UpdatePassword(context echo.Context) error {
+	log.Debugf("Update password")
+
+	userId, authenticate, err := userApi.bindAuthenticate(context)
+	if err != nil {
+		return err
+	}
+
+	err = userApi.checkUserId(context, userId)
+	if err != nil {
+		return err
+	}
+
+	err = userApi.facade.UpdatePassword(userId, authenticate)
+	if err != nil {
+		log.Errorf("Something went wrong while updating password: %v", err)
+		return echo.ErrUnauthorized
+	}
+	log.Debugf("Password for user %s updated", userId)
+	return context.NoContent(http.StatusNoContent)
+}
+
+func (userApi *UserApi) DeleteUser(context echo.Context) error {
+	log.Debugf("Delete password")
 
 	userId, err := uuid.Parse(context.Param(userIdParam))
 	if err != nil {
@@ -113,18 +159,18 @@ func (userApi *UserApi) RefreshToken(context echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	if userId != claims.UserId {
-		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
-		return echo.ErrUnauthorized
+	err = userApi.checkUserId(context, userId)
+	if err != nil {
+		return err
 	}
 
-	token, err := userApi.facade.RefreshToken(claims.UserId, refreshToken)
+	err = userApi.facade.DeleteUser(userId)
 	if err != nil {
-		log.Errorf("Something went wrong while creating Token: %v", err)
+		log.Errorf("Something went wrong while deleting user: %v", err)
 		return echo.ErrUnauthorized
 	}
-	log.Debugf("Refresh token for user %s updated", claims.UserId)
-	return context.JSON(http.StatusOK, token)
+	log.Debugf("User %s deleted", userId)
+	return context.NoContent(http.StatusNoContent)
 }
 
 func (userApi *UserApi) bindAuthenticate(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
@@ -145,5 +191,22 @@ func (userApi *UserApi) bindAuthenticate(context echo.Context) (uuid.UUID, *core
 		log.Warnf("Error while binding userId: %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
+
 	return userId, authenticate, nil
+}
+
+func (userApi *UserApi) checkUserId(context echo.Context, userId uuid.UUID) error {
+	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
+
+	if !ok {
+		log.Warnf("Could not map Claims")
+		return echo.ErrUnauthorized
+	}
+
+	if userId != claims.UserId {
+		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
+		return echo.ErrUnauthorized
+	}
+
+	return nil
 }

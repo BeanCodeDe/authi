@@ -19,5 +19,7 @@ type (
 		UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error
 		LoginUser(user *UserDB) error
 		CheckRefreshToken(userId uuid.UUID, refreshToken string) error
+		UpdatePassword(userId uuid.UUID, password string, hash string) error
+		DeleteUser(userId uuid.UUID) error
 	}
 )

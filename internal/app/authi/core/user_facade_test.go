@@ -19,10 +19,14 @@ type (
 		updateRefreshTokenRecordArray []*updateRefreshTokenRecord
 		loginUserRecordArray          []*loginUserRecord
 		checkRefreshTokenRecordArray  []*checkRefreshTokenRecord
+		updatePasswordRecordArray     []*updatePasswordRecord
+		deleteUserRecordArray         []*deleteUserRecord
 		createUserReturn              error
 		updateRefreshTokenReturn      error
 		loginUserReturn               error
 		checkRefreshReturn            error
+		updatePasswordReturn          error
+		deleteUserReturn              error
 	}
 
 	closeRecord struct {
@@ -45,6 +49,15 @@ type (
 	checkRefreshTokenRecord struct {
 		userId       uuid.UUID
 		refreshToken string
+	}
+	updatePasswordRecord struct {
+		userId   uuid.UUID
+		password string
+		hash     string
+	}
+
+	deleteUserRecord struct {
+		userId uuid.UUID
 	}
 )
 
@@ -291,4 +304,16 @@ func (connection *ConnectionMock) CheckRefreshToken(userId uuid.UUID, refreshTok
 	checkRefreshTokenRecord := &checkRefreshTokenRecord{userId: userId, refreshToken: refreshToken}
 	connection.checkRefreshTokenRecordArray = append(connection.checkRefreshTokenRecordArray, checkRefreshTokenRecord)
 	return connection.checkRefreshReturn
+}
+
+func (connection *ConnectionMock) UpdatePassword(userId uuid.UUID, password string, hash string) error {
+	updatePasswordRecord := &updatePasswordRecord{userId: userId, password: password, hash: hash}
+	connection.updatePasswordRecordArray = append(connection.updatePasswordRecordArray, updatePasswordRecord)
+	return connection.updatePasswordReturn
+}
+
+func (connection *ConnectionMock) DeleteUser(userId uuid.UUID) error {
+	deleteUserRecord := &deleteUserRecord{userId: userId}
+	connection.deleteUserRecordArray = append(connection.deleteUserRecordArray, deleteUserRecord)
+	return connection.deleteUserReturn
 }
