@@ -1,1 +1,3 @@
-![Build](https://img.shields.io/github/workflow/status/BeanCodeDe/authi/Main%20Pipeline)
+![Build][buidlBadge]
+
+[buidlBadge]: https://img.shields.io/github/workflow/status/BeanCodeDe/authi/MainPipeline
