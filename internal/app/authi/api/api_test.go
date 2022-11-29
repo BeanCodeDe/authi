@@ -103,6 +103,8 @@ func TestCreateUser_Successfully(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 1, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.createUserRecordArray[0].userId)
 		assert.Equal(t, password, facade.createUserRecordArray[0].authenticate.Password)
 	}
@@ -126,6 +128,8 @@ func TestCreateUser_BindAuth_Error(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -147,6 +151,8 @@ func TestCreateUser_ValidateAuth_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -168,6 +174,8 @@ func TestCreateUser_ParseUserIdParam_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -189,6 +197,8 @@ func TestCreateUser_CreateUser_ErrUserAlreadyExists(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 1, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.createUserRecordArray[0].userId)
 		assert.Equal(t, password, facade.createUserRecordArray[0].authenticate.Password)
 	}
@@ -212,8 +222,33 @@ func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 1, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.createUserRecordArray[0].userId)
 		assert.Equal(t, password, facade.createUserRecordArray[0].authenticate.Password)
+	}
+}
+
+func TestCreateUser_CreateUser_ErrBadRequest(t *testing.T) {
+	facade := &facadeMock{createUserReturn: []error{errSome}}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	// Assertions
+	if assert.Equal(t, echo.ErrBadRequest, userApi.CreateUser(c)) {
+		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -239,6 +274,8 @@ func TestLoginUser_Successfully(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 1, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.loginUserRecordArray[0].userId)
 		assert.Equal(t, password, facade.loginUserRecordArray[0].authenticate.Password)
 		assert.Equal(t, "{\"access_token\":\"some_access_token\",\"expires_in\":1,\"refresh_token\":\"some_refresh_token\",\"refresh_expires_in\":2}\n", rec.Body.String())
@@ -263,6 +300,8 @@ func TestLoginUser_BindAuth_Error(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -284,6 +323,8 @@ func TestLoginUser_ValidateAuth_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -305,6 +346,8 @@ func TestLoginUser_ParseUserIdParam_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -327,8 +370,34 @@ func TestLoginUser__LoginUser_ErrUnauthorized(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 1, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.loginUserRecordArray[0].userId)
 		assert.Equal(t, password, facade.loginUserRecordArray[0].authenticate.Password)
+	}
+}
+
+func TestLoginUser__LoginUser_ErrBadRequest(t *testing.T) {
+	facade := &facadeMock{loginUserReturn: errorTokenResponse}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam + userLoginPath)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.Equal(t, echo.ErrBadRequest, userApi.LoginUser(c)) {
+		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -340,7 +409,7 @@ func TestRefreshToken_Successfully(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
 	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -354,6 +423,8 @@ func TestRefreshToken_Successfully(t *testing.T) {
 		assert.Equal(t, 1, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.refreshTokenRecordArray[0].userId)
 		assert.Equal(t, refreshToken, facade.refreshTokenRecordArray[0].token)
 	}
@@ -365,7 +436,7 @@ func TestRefreshToken_ParseClaim_Invalid(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
 	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -378,6 +449,8 @@ func TestRefreshToken_ParseClaim_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -387,7 +460,7 @@ func TestRefreshToken_ParseUserIdParam_Invalid(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
 	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -400,6 +473,8 @@ func TestRefreshToken_ParseUserIdParam_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -409,7 +484,7 @@ func TestRefreshToken_CheckUserId_Invalid(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
 	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -422,6 +497,8 @@ func TestRefreshToken_CheckUserId_Invalid(t *testing.T) {
 		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 	}
 }
 
@@ -431,7 +508,7 @@ func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
 	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -444,10 +521,118 @@ func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
 		assert.Equal(t, 1, len(facade.refreshTokenRecordArray))
 		assert.Equal(t, 0, len(facade.loginUserRecordArray))
 		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
 		assert.Equal(t, userId, facade.refreshTokenRecordArray[0].userId)
 		assert.Equal(t, refreshToken, facade.refreshTokenRecordArray[0].token)
 	}
 }
+
+// Update Password Test
+
+func TestUpdatePassword_Successfully(t *testing.T) {
+	facade := &facadeMock{updatePasswordReturn: []error{nil}}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPatch, userRootPath, strings.NewReader(authenticationUserJson))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.NoError(t, userApi.UpdatePassword(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 1, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
+		assert.Equal(t, userId, facade.updatePasswordRecordArray[0].userId)
+		assert.Equal(t, password, facade.updatePasswordRecordArray[0].authenticate.Password)
+	}
+}
+
+func TestUpdatePassword_BindAuth_Error(t *testing.T) {
+	facade := &facadeMock{}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPatch, userRootPath, strings.NewReader(authenticationUserWrongJson))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	// Assertions
+	if assert.Equal(t, echo.ErrBadRequest, userApi.UpdatePassword(c)) {
+		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
+	}
+}
+
+func TestUpdatePassword_UpdatePassword_ErrBadRequest(t *testing.T) {
+	facade := &facadeMock{updatePasswordReturn: []error{nil}}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodPatch, userRootPath, nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.Equal(t, echo.ErrBadRequest, userApi.UpdatePassword(c)) {
+		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 0, len(facade.deleteUserRecordArray))
+	}
+}
+
+// Delete User Test
+
+func TestDeleteUser_Successfully(t *testing.T) {
+	facade := &facadeMock{deleteUserReturn: []error{nil}}
+	userApi := &UserApi{facade}
+	// Setup
+	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
+	req := httptest.NewRequest(http.MethodDelete, userRootPath, nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetParamNames(userIdParam)
+	c.SetParamValues(userId.String())
+	c.Set(authadapter.ClaimName, claimUser)
+	// Assertions
+	if assert.NoError(t, userApi.DeleteUser(c)) {
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
+		assert.Equal(t, 0, len(facade.loginUserRecordArray))
+		assert.Equal(t, 0, len(facade.createUserRecordArray))
+		assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
+		assert.Equal(t, 1, len(facade.deleteUserRecordArray))
+		assert.Equal(t, userId, facade.deleteUserRecordArray[0].userId)
+	}
+}
+
+//Mock methods
 
 func (facadeMock *facadeMock) CreateUser(userId uuid.UUID, authenticate *core.AuthenticateDTO) error {
 	createUserRecord := &authenticateRecord{userId, authenticate}
