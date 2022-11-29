@@ -88,11 +88,6 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 		return err
 	}
 
-	err = userApi.checkUserId(context, userId)
-	if err != nil {
-		return err
-	}
-
 	token, err := userApi.facade.LoginUser(userId, authenticate)
 	if err != nil {
 		log.Warnf("Error while logging in user %v: %v", userId, err)
