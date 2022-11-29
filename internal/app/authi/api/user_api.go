@@ -63,7 +63,7 @@ func (userApi *UserApi) CreateUserId(context echo.Context) error {
 
 func (userApi *UserApi) CreateUser(context echo.Context) error {
 	log.Debugf("Create user")
-	userId, authenticate, err := userApi.bindAuthenticate(context)
+	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (userApi *UserApi) CreateUser(context echo.Context) error {
 
 func (userApi *UserApi) LoginUser(context echo.Context) error {
 	log.Debugf("Login some user")
-	userId, authenticate, err := userApi.bindAuthenticate(context)
+	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (userApi *UserApi) RefreshToken(context echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	err = userApi.checkUserId(context, userId)
+	err = checkUserId(context, userId)
 	if err != nil {
 		return err
 	}
@@ -126,12 +126,12 @@ func (userApi *UserApi) RefreshToken(context echo.Context) error {
 func (userApi *UserApi) UpdatePassword(context echo.Context) error {
 	log.Debugf("Update password")
 
-	userId, authenticate, err := userApi.bindAuthenticate(context)
+	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
 		return err
 	}
 
-	err = userApi.checkUserId(context, userId)
+	err = checkUserId(context, userId)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (userApi *UserApi) DeleteUser(context echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	err = userApi.checkUserId(context, userId)
+	err = checkUserId(context, userId)
 	if err != nil {
 		return err
 	}
@@ -166,42 +166,4 @@ func (userApi *UserApi) DeleteUser(context echo.Context) error {
 	}
 	log.Debugf("User %s deleted", userId)
 	return context.NoContent(http.StatusNoContent)
-}
-
-func (userApi *UserApi) bindAuthenticate(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
-	log.Debugf("Bind context to auth %v", context)
-	authenticate := new(core.AuthenticateDTO)
-	if err := context.Bind(authenticate); err != nil {
-		log.Warnf("Could not bind auth, %v", err)
-		return uuid.Nil, nil, echo.ErrBadRequest
-	}
-	log.Debugf("Auth bind %v", authenticate)
-	if err := context.Validate(authenticate); err != nil {
-		log.Warnf("Could not validate auth, %v", err)
-		return uuid.Nil, nil, echo.ErrBadRequest
-	}
-
-	userId, err := uuid.Parse(context.Param(userIdParam))
-	if err != nil {
-		log.Warnf("Error while binding userId: %v", err)
-		return uuid.Nil, nil, echo.ErrBadRequest
-	}
-
-	return userId, authenticate, nil
-}
-
-func (userApi *UserApi) checkUserId(context echo.Context, userId uuid.UUID) error {
-	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
-
-	if !ok {
-		log.Warnf("Could not map Claims")
-		return echo.ErrUnauthorized
-	}
-
-	if userId != claims.UserId {
-		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
-		return echo.ErrUnauthorized
-	}
-
-	return nil
 }
