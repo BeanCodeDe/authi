@@ -60,7 +60,6 @@ var (
 	refreshToken                  = "some_refresh_token"
 	authenticationUserJson        = fmt.Sprintf(`{"password":"%s"}`, password)
 	authenticateObject            = &core.AuthenticateDTO{Password: password}
-	authenticationUserWrongJson   = "xyz"
 	authenticationUserInvalidJson = `{"password":""}`
 	claimUser                     = authadapter.Claims{UserId: userId}
 	wrongClaimFormat              = &UserApi{}
