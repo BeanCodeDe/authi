@@ -15,7 +15,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.CreateUser(userId, authenticate)
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.closeRecordArray))
 	assert.Equal(t, 1, len(dbConnection.createUserRecordArray))
 	assert.Equal(t, 0, len(dbConnection.updateRefreshTokenRecordArray))
