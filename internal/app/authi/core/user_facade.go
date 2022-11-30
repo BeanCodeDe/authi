@@ -9,7 +9,7 @@ import (
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
@@ -53,7 +53,7 @@ func loadSignKey() (*rsa.PrivateKey, error) {
 	return signKey, nil
 }
 
-func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *AuthenticateDTO) error {
+func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error {
 
 	creationTime := time.Now()
 
@@ -69,7 +69,7 @@ func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *Authent
 	return nil
 }
 
-func (userFacade *UserFacade) LoginUser(userId uuid.UUID, authenticate *AuthenticateDTO) (*TokenResponseDTO, error) {
+func (userFacade *UserFacade) LoginUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) (*adapter.TokenResponseDTO, error) {
 	dbUser := &db.UserDB{ID: userId, Password: authenticate.Password}
 	if err := userFacade.dbConnection.LoginUser(dbUser); err != nil {
 		return nil, fmt.Errorf("something went wrong when logging in user, %v: %v", userId, err)
@@ -77,7 +77,7 @@ func (userFacade *UserFacade) LoginUser(userId uuid.UUID, authenticate *Authenti
 	return userFacade.createJWTToken(userId)
 }
 
-func (userFacade *UserFacade) RefreshToken(userId uuid.UUID, refreshToken string) (*TokenResponseDTO, error) {
+func (userFacade *UserFacade) RefreshToken(userId uuid.UUID, refreshToken string) (*adapter.TokenResponseDTO, error) {
 	if err := userFacade.dbConnection.CheckRefreshToken(userId, refreshToken); err != nil {
 		return nil, fmt.Errorf("no user with refresh token was found: %v", err)
 	}
@@ -85,7 +85,7 @@ func (userFacade *UserFacade) RefreshToken(userId uuid.UUID, refreshToken string
 	return userFacade.createJWTToken(userId)
 }
 
-func (userFacade *UserFacade) UpdatePassword(userId uuid.UUID, authenticate *AuthenticateDTO) error {
+func (userFacade *UserFacade) UpdatePassword(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error {
 	if err := userFacade.dbConnection.UpdatePassword(userId, authenticate.Password, randomString()); err != nil {
 		return fmt.Errorf("error while updating password of user: %v", err)
 	}
@@ -99,12 +99,12 @@ func (userFacade *UserFacade) DeleteUser(userId uuid.UUID) error {
 	return nil
 }
 
-func (userFacade *UserFacade) createJWTToken(userId uuid.UUID) (*TokenResponseDTO, error) {
+func (userFacade *UserFacade) createJWTToken(userId uuid.UUID) (*adapter.TokenResponseDTO, error) {
 
 	tokenExpireAt := time.Now().Add(5 * time.Minute).Unix()
 	refreshTokenExpireAt := time.Now().Add(10 * time.Minute)
 
-	claimsToken := &authadapter.Claims{
+	claimsToken := &adapter.Claims{
 		UserId: userId,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: tokenExpireAt,
@@ -121,5 +121,5 @@ func (userFacade *UserFacade) createJWTToken(userId uuid.UUID) (*TokenResponseDT
 	if err = userFacade.dbConnection.UpdateRefreshToken(userId, refreshToken, refreshTokenExpireAt); err != nil {
 		return nil, fmt.Errorf("refresh token could not be saved into database: %v", err)
 	}
-	return &TokenResponseDTO{AccessToken: signedToken, ExpiresIn: int(tokenExpireAt), RefreshToken: refreshToken, RefreshExpiresIn: int(refreshTokenExpireAt.Unix())}, nil
+	return &adapter.TokenResponseDTO{AccessToken: signedToken, ExpiresIn: int(tokenExpireAt), RefreshToken: refreshToken, RefreshExpiresIn: int(refreshTokenExpireAt.Unix())}, nil
 }

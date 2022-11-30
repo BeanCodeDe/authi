@@ -7,13 +7,18 @@ import (
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
-	"github.com/BeanCodeDe/authi/pkg/authmiddleware"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
+	echoMiddleware "github.com/BeanCodeDe/authi/pkg/middleware"
+	"github.com/BeanCodeDe/authi/pkg/parser"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
+)
+
+var (
+	userIdParam = "userId"
 )
 
 type (
@@ -30,26 +35,26 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
-func NewUserApi(auth authadapter.Auth) (*UserApi, error) {
+func NewUserApi(auth adapter.AuthAdapter, parser parser.Parser) (*UserApi, error) {
 	userFacade, err := core.NewUserFacade()
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing user facade: %v", err)
 	}
 
-	authMiddleware := authmiddleware.NewAuthmiddleware(auth)
+	echoMiddleware := echoMiddleware.NewEchoMiddleware(auth, parser)
 	api := &UserApi{userFacade}
 
 	e := echo.New()
 	e.Use(middleware.CORS())
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	userGroup := e.Group(userRootPath)
+	userGroup := e.Group(adapter.AuthiRootPath)
 	userGroup.POST("", api.CreateUserId)
-	userGroup.POST("/:"+userIdParam+userLoginPath, api.LoginUser)
+	userGroup.POST("/:"+userIdParam+adapter.AuthiLoginPath, api.LoginUser)
 	userGroup.PUT("/:"+userIdParam, api.CreateUser)
-	userGroup.PATCH("/:"+userIdParam+userRefreshPath, api.RefreshToken, authMiddleware.CheckToken)
-	userGroup.PATCH("/:"+userIdParam, api.UpdatePassword, authMiddleware.CheckToken)
-	userGroup.DELETE("/:"+userIdParam, api.DeleteUser, authMiddleware.CheckToken)
+	userGroup.PATCH("/:"+userIdParam+adapter.AuthiRefreshPath, api.RefreshToken, echoMiddleware.CheckToken)
+	userGroup.PATCH("/:"+userIdParam, api.UpdatePassword, echoMiddleware.CheckToken)
+	userGroup.DELETE("/:"+userIdParam, api.DeleteUser, echoMiddleware.CheckToken)
 
 	e.Logger.Fatal(e.Start(":1203"))
 
@@ -112,7 +117,7 @@ func (userApi *UserApi) RefreshToken(context echo.Context) error {
 		return err
 	}
 
-	refreshToken := context.Request().Header.Get(authadapter.RefreshTokenHeaderName)
+	refreshToken := context.Request().Header.Get(adapter.RefreshTokenHeaderName)
 
 	token, err := userApi.facade.RefreshToken(userId, refreshToken)
 	if err != nil {

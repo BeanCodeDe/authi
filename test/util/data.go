@@ -2,8 +2,6 @@ package util
 
 const (
 	url = "http://localhost:1203"
-
-	contentTyp = "application/json; charset=utf-8"
 )
 
 type (

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
 	"gopkg.in/go-playground/assert.v1"
 )
@@ -18,7 +19,7 @@ const (
 )
 
 func sendCreateUserIdRequest() *http.Response {
-	resp, err := http.Post(url+userPath, contentTyp, nil)
+	resp, err := http.Post(url+userPath, adapter.ContentTyp, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +37,7 @@ func sendCreateUserRequest(id string, userCreateJson string) *http.Response {
 		panic(err)
 	}
 
-	req.Header.Set("Content-Type", contentTyp)
+	req.Header.Set("Content-Type", adapter.ContentTyp)
 	resp, err := client.Do(req)
 
 	if err != nil {

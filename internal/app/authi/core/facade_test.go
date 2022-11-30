@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -62,7 +63,7 @@ type (
 var (
 	userId         = uuid.New()
 	refreshToken   = "someRefreshToken"
-	authenticate   = &AuthenticateDTO{}
+	authenticate   = &adapter.AuthenticateDTO{}
 	privateKeyPath = "../../../../deployments/token/privat/jwtRS256.key"
 	errUnknown     = errors.New("some error")
 )

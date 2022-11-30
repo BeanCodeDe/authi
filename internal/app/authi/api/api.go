@@ -1,8 +1,7 @@
 package api
 
 import (
-	"github.com/BeanCodeDe/authi/internal/app/authi/core"
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
@@ -17,16 +16,9 @@ type (
 	}
 )
 
-const (
-	userRootPath    = "/user"
-	userIdParam     = "userId"
-	userLoginPath   = "/login"
-	userRefreshPath = "/refresh"
-)
-
-func bindAuthenticate(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, error) {
+func bindAuthenticate(context echo.Context) (uuid.UUID, *adapter.AuthenticateDTO, error) {
 	log.Debugf("Bind context to auth %v", context)
-	authenticate := new(core.AuthenticateDTO)
+	authenticate := new(adapter.AuthenticateDTO)
 	if err := context.Bind(authenticate); err != nil {
 		log.Warnf("Could not bind auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
@@ -47,7 +39,7 @@ func bindAuthenticate(context echo.Context) (uuid.UUID, *core.AuthenticateDTO, e
 }
 
 func checkUserId(context echo.Context, userId uuid.UUID) error {
-	claims, ok := context.Get(authadapter.ClaimName).(authadapter.Claims)
+	claims, ok := context.Get(adapter.ClaimName).(adapter.Claims)
 
 	if !ok {
 		log.Warnf("Could not map Claims")

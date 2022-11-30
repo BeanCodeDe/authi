@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
 	"gopkg.in/go-playground/assert.v1"
 )
@@ -40,7 +40,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set("Content-Type", contentTyp)
+	req.Header.Set("Content-Type", adapter.ContentTyp)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -56,8 +56,8 @@ func sendRefreshTokenRequest(userId string, token string, refreshToken string) *
 	if err != nil {
 		panic(err)
 	}
-	req.Header.Set(authadapter.AuthorizationHeaderName, "Bearer "+token)
-	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
+	req.Header.Set(adapter.RefreshTokenHeaderName, refreshToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

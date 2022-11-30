@@ -3,7 +3,8 @@ package main
 import (
 	"github.com/BeanCodeDe/authi/internal/app/authi/api"
 	"github.com/BeanCodeDe/authi/internal/app/authi/config"
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
+	"github.com/BeanCodeDe/authi/pkg/parser"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -11,12 +12,13 @@ func main() {
 	setLogLevel(config.LogLevel)
 	log.Info("Start Server")
 
-	authAdapter, err := authadapter.NewAuthAdapter()
+	authAdapter := adapter.NewAuthiAdapter()
+	tokenParser, err := parser.NewJWTParser()
 	if err != nil {
-		log.Fatalf("Error while initializing auth adapter: %v", err)
+		log.Fatalf("Error while initializing token parser: %v", err)
 	}
 
-	_, err = api.NewUserApi(authAdapter)
+	_, err = api.NewUserApi(authAdapter, tokenParser)
 	if err != nil {
 		log.Fatalf("Error while initializing user api: %v", err)
 	}

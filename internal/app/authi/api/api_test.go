@@ -8,8 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/core"
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +18,7 @@ import (
 type (
 	authenticateRecord struct {
 		userId       uuid.UUID
-		authenticate *core.AuthenticateDTO
+		authenticate *adapter.AuthenticateDTO
 	}
 
 	refreshTokenRecord struct {
@@ -32,7 +31,7 @@ type (
 	}
 
 	authenticateReturn struct {
-		tokenResponse *core.TokenResponseDTO
+		tokenResponse *adapter.TokenResponseDTO
 		err           error
 	}
 
@@ -52,16 +51,16 @@ type (
 
 var (
 	errSome                       = errors.New("some error from facade")
-	successfullyTokenResponse     = []*authenticateReturn{{tokenResponse: &core.TokenResponseDTO{AccessToken: "some_access_token", ExpiresIn: 1, RefreshToken: "some_refresh_token", RefreshExpiresIn: 2}, err: nil}}
+	successfullyTokenResponse     = []*authenticateReturn{{tokenResponse: &adapter.TokenResponseDTO{AccessToken: "some_access_token", ExpiresIn: 1, RefreshToken: "some_refresh_token", RefreshExpiresIn: 2}, err: nil}}
 	errorTokenResponse            = []*authenticateReturn{{tokenResponse: nil, err: errSome}}
 	userId                        = uuid.New()
 	wrongUUID                     = "xyz"
 	password                      = "some_password"
 	refreshToken                  = "some_refresh_token"
 	authenticationUserJson        = fmt.Sprintf(`{"password":"%s"}`, password)
-	authenticateObject            = &core.AuthenticateDTO{Password: password}
+	authenticateObject            = &adapter.AuthenticateDTO{Password: password}
 	authenticationUserInvalidJson = `{"password":""}`
-	claimUser                     = authadapter.Claims{UserId: userId}
+	claimUser                     = adapter.Claims{UserId: userId}
 	wrongClaimFormat              = &UserApi{}
 )
 
@@ -71,10 +70,10 @@ func TestBindAuthenticate_Successfully(t *testing.T) {
 	// Prep
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := e.NewContext(req, nil)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
 
@@ -91,10 +90,10 @@ func TestBindAuthenticate_CouldNotBind(t *testing.T) {
 	// Prep
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationXML)
 	c := e.NewContext(req, nil)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
 
@@ -111,10 +110,10 @@ func TestBindAuthenticate_ValidateError(t *testing.T) {
 	// Prep
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserInvalidJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserInvalidJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := e.NewContext(req, nil)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
 
@@ -131,10 +130,10 @@ func TestBindAuthenticate_ParseError(t *testing.T) {
 	// Prep
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := e.NewContext(req, nil)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(wrongUUID)
 
@@ -153,7 +152,7 @@ func TestCheckUserId_Successfully(t *testing.T) {
 	// Prep
 	e := echo.New()
 	c := e.NewContext(nil, nil)
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 
 	// Exec
 	returnedErr := checkUserId(c, userId)
@@ -166,7 +165,7 @@ func TestCheckUserId_CouldNotMapClaim(t *testing.T) {
 	// Prep
 	e := echo.New()
 	c := e.NewContext(nil, nil)
-	c.Set(authadapter.ClaimName, wrongClaimFormat)
+	c.Set(adapter.ClaimName, wrongClaimFormat)
 
 	// Exec
 	returnedErr := checkUserId(c, userId)
@@ -179,7 +178,7 @@ func TestCheckUserId_ClaimDoesNotMatchUserId(t *testing.T) {
 	// Prep
 	e := echo.New()
 	c := e.NewContext(nil, nil)
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 
 	// Exec
 	returnedErr := checkUserId(c, uuid.New())
@@ -190,27 +189,27 @@ func TestCheckUserId_ClaimDoesNotMatchUserId(t *testing.T) {
 
 //Mock methods
 
-func (facadeMock *facadeMock) CreateUser(userId uuid.UUID, authenticate *core.AuthenticateDTO) error {
+func (facadeMock *facadeMock) CreateUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error {
 	createUserRecord := &authenticateRecord{userId, authenticate}
 	facadeMock.createUserRecordArray = append(facadeMock.createUserRecordArray, createUserRecord)
 	return facadeMock.createUserReturn[len(facadeMock.createUserRecordArray)-1]
 }
 
-func (facadeMock *facadeMock) LoginUser(userId uuid.UUID, authenticate *core.AuthenticateDTO) (*core.TokenResponseDTO, error) {
+func (facadeMock *facadeMock) LoginUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) (*adapter.TokenResponseDTO, error) {
 	loginUserRecord := &authenticateRecord{userId, authenticate}
 	facadeMock.loginUserRecordArray = append(facadeMock.loginUserRecordArray, loginUserRecord)
 	loginReturn := facadeMock.loginUserReturn[len(facadeMock.loginUserRecordArray)-1]
 	return loginReturn.tokenResponse, loginReturn.err
 }
 
-func (facadeMock *facadeMock) RefreshToken(userId uuid.UUID, refreshToken string) (*core.TokenResponseDTO, error) {
+func (facadeMock *facadeMock) RefreshToken(userId uuid.UUID, refreshToken string) (*adapter.TokenResponseDTO, error) {
 	refreshTokenRecord := &refreshTokenRecord{userId, refreshToken}
 	facadeMock.refreshTokenRecordArray = append(facadeMock.refreshTokenRecordArray, refreshTokenRecord)
 	loginReturn := facadeMock.refreshTokenReturn[len(facadeMock.refreshTokenRecordArray)-1]
 	return loginReturn.tokenResponse, loginReturn.err
 }
 
-func (facadeMock *facadeMock) UpdatePassword(userId uuid.UUID, authenticate *core.AuthenticateDTO) error {
+func (facadeMock *facadeMock) UpdatePassword(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error {
 	updatePasswordRecord := &authenticateRecord{userId, authenticate}
 	facadeMock.updatePasswordRecordArray = append(facadeMock.updatePasswordRecordArray, updatePasswordRecord)
 	return facadeMock.updatePasswordReturn[len(facadeMock.updatePasswordRecordArray)-1]

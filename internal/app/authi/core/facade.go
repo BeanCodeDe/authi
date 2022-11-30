@@ -3,26 +3,16 @@ package core
 import (
 	"math/rand"
 
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
 )
 
 type (
-	TokenResponseDTO struct {
-		AccessToken      string `json:"access_token"`
-		ExpiresIn        int    `json:"expires_in"`
-		RefreshToken     string `json:"refresh_token"`
-		RefreshExpiresIn int    `json:"refresh_expires_in"`
-	}
-
-	AuthenticateDTO struct {
-		Password string `json:"password" validate:"required"`
-	}
-
 	Facade interface {
-		CreateUser(userId uuid.UUID, authenticate *AuthenticateDTO) error
-		LoginUser(userId uuid.UUID, authenticate *AuthenticateDTO) (*TokenResponseDTO, error)
-		RefreshToken(userId uuid.UUID, refreshToken string) (*TokenResponseDTO, error)
-		UpdatePassword(userId uuid.UUID, authenticate *AuthenticateDTO) error
+		CreateUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error
+		LoginUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) (*adapter.TokenResponseDTO, error)
+		RefreshToken(userId uuid.UUID, refreshToken string) (*adapter.TokenResponseDTO, error)
+		UpdatePassword(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error
 		DeleteUser(userId uuid.UUID) error
 	}
 )

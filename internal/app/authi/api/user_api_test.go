@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
-	"github.com/BeanCodeDe/authi/pkg/authadapter"
+	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/go-playground/validator.v9"
@@ -19,7 +19,7 @@ func TestCreateUserId_Successfully(t *testing.T) {
 	userApi := &UserApi{&facadeMock{}}
 	// Setup
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, userRootPath, nil)
+	req := httptest.NewRequest(http.MethodPost, adapter.AuthiRootPath, nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -37,11 +37,11 @@ func TestCreateUser_Successfully(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
 	// Exec
@@ -65,11 +65,11 @@ func TestCreateUser_CreateUser_ErrUserAlreadyExists(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
 	// Exec
@@ -92,11 +92,11 @@ func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
 	// Exec
@@ -120,14 +120,14 @@ func TestLoginUser_Successfully(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam + userLoginPath)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam + adapter.AuthiLoginPath)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.LoginUser(c)
 	// Assertions
@@ -150,14 +150,14 @@ func TestLoginUser__LoginUser_ErrUnauthorized(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam + userLoginPath)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam + adapter.AuthiLoginPath)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.LoginUser(c)
 	// Assertions
@@ -180,14 +180,14 @@ func TestRefreshToken_Successfully(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
-	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, nil)
+	req.Header.Set(adapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam + userRefreshPath)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam + adapter.AuthiRefreshPath)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.RefreshToken(c)
 	// Assertions
@@ -209,14 +209,14 @@ func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, userRootPath, nil)
-	req.Header.Set(authadapter.RefreshTokenHeaderName, refreshToken)
+	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, nil)
+	req.Header.Set(adapter.RefreshTokenHeaderName, refreshToken)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam + userRefreshPath)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam + adapter.AuthiRefreshPath)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.RefreshToken(c)
 	// Assertions
@@ -238,14 +238,14 @@ func TestUpdatePassword_Successfully(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPatch, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPatch, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.UpdatePassword(c)
 	// Assertions
@@ -267,14 +267,14 @@ func TestUpdatePassword_UpdatePassword_ErrUnauthorized(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPatch, userRootPath, strings.NewReader(authenticationUserJson))
+	req := httptest.NewRequest(http.MethodPatch, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.UpdatePassword(c)
 	// Assertions
@@ -296,14 +296,14 @@ func TestDeleteUser_Successfully(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodDelete, userRootPath, nil)
+	req := httptest.NewRequest(http.MethodDelete, adapter.AuthiRootPath, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.DeleteUser(c)
 	// Assertions
@@ -323,14 +323,14 @@ func TestDeleteUser_DeleteUser_ErrUnauthorized(t *testing.T) {
 	// Setup
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodDelete, userRootPath, nil)
+	req := httptest.NewRequest(http.MethodDelete, adapter.AuthiRootPath, nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.SetPath(userRootPath + "/:" + userIdParam)
+	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
-	c.Set(authadapter.ClaimName, claimUser)
+	c.Set(adapter.ClaimName, claimUser)
 	// Exec
 	err := userApi.DeleteUser(c)
 	// Assertions
