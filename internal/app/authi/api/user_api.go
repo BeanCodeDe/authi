@@ -62,12 +62,12 @@ func NewUserApi(auth adapter.AuthAdapter, parser parser.Parser) (*UserApi, error
 }
 
 func (userApi *UserApi) CreateUserId(context echo.Context) error {
-	log.Debug("Create User")
+	log.Debug("Create User Id")
 	return context.String(http.StatusCreated, uuid.NewString())
 }
 
 func (userApi *UserApi) CreateUser(context echo.Context) error {
-	log.Debugf("Create user")
+	log.Debugf("Create User")
 	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
 		return err

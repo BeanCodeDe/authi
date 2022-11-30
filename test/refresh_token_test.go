@@ -11,20 +11,20 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	token, userId, _ := util.ObtainToken(t)
+	token, userId := util.ObtainToken(t)
 	newToken, status := util.RefreshToken(userId, token.AccessToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusOK)
 	assert.NotEqual(t, newToken, nil)
 }
 
 func TestAuthWrongFormatAccessToken(t *testing.T) {
-	token, userId, _ := util.ObtainToken(t)
+	token, userId := util.ObtainToken(t)
 	_, status := util.RefreshToken(userId, token.RefreshToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
 func TestAuthWrongUserIdToken(t *testing.T) {
-	token, userId, _ := util.ObtainToken(t)
+	token, userId := util.ObtainToken(t)
 	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
 	customToken := util.CreateCustomJWTToken(uuid.NewString(), time.Now().Add(30*time.Minute).Unix(), signKey)
 	_, status := util.RefreshToken(userId, customToken, token.RefreshToken)
@@ -32,13 +32,13 @@ func TestAuthWrongUserIdToken(t *testing.T) {
 }
 
 func TestAuthWrongUserIdPath(t *testing.T) {
-	token, _, _ := util.ObtainToken(t)
+	token, _ := util.ObtainToken(t)
 	_, status := util.RefreshToken(uuid.NewString(), token.AccessToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
 
 func TestAuthExpiredToken(t *testing.T) {
-	token, userId, _ := util.ObtainToken(t)
+	token, userId := util.ObtainToken(t)
 	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
 	customToken := util.CreateCustomJWTToken(userId, time.Now().Add(-1*time.Second).Unix(), signKey)
 	_, status := util.RefreshToken(userId, customToken, token.RefreshToken)
@@ -46,7 +46,7 @@ func TestAuthExpiredToken(t *testing.T) {
 }
 
 func TestAuthWrongRefreshToken(t *testing.T) {
-	token, userId, _ := util.ObtainToken(t)
+	token, userId := util.ObtainToken(t)
 	_, status := util.RefreshToken(userId, token.AccessToken, token.AccessToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }

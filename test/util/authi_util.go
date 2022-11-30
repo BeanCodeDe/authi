@@ -14,11 +14,6 @@ import (
 )
 
 const (
-	loginPath   = "/login"
-	refreshPath = "/refresh"
-)
-
-const (
 	PublicKeyFile      = "./data/token/public/jwtRS256.key.pub"
 	PrivatKeyFile      = "./data/token/privat/jwtRS256.key"
 	WrongPublicKeyFile = "./data/token/public/jwtRS256_wrong.key.pub"
@@ -36,7 +31,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 		panic(err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url+userPath+"/"+userId+loginPath, bytes.NewBuffer(userJson))
+	req, err := http.NewRequest(http.MethodPost, url+adapter.AuthiRootPath+"/"+userId+adapter.AuthiLoginPath, bytes.NewBuffer(userJson))
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +47,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 }
 
 func sendRefreshTokenRequest(userId string, token string, refreshToken string) *http.Response {
-	req, err := http.NewRequest(http.MethodPatch, url+userPath+"/"+userId+refreshPath, nil)
+	req, err := http.NewRequest(http.MethodPatch, url+adapter.AuthiRootPath+"/"+userId+adapter.AuthiRefreshPath, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -68,8 +63,8 @@ func sendRefreshTokenRequest(userId string, token string, refreshToken string) *
 	return resp
 }
 
-func Login(userId string, authenticate *Authenticate) (*TokenResponseDTO, int) {
-	response := sendLoginRequest(userId, authenticate)
+func Login(userId string, password string) (*TokenResponseDTO, int) {
+	response := sendLoginRequest(userId, &Authenticate{Password: password})
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
 		return nil, response.StatusCode
@@ -94,12 +89,11 @@ func RefreshToken(userId string, token string, refreshToken string) (*TokenRespo
 	return tokenResponse, response.StatusCode
 }
 
-func ObtainToken(t *testing.T) (*TokenResponseDTO, string, *Authenticate) {
+func ObtainToken(t *testing.T) (*TokenResponseDTO, string) {
 	userId := CreateUserForFurtherTesting(t)
-	authenticate := &Authenticate{Password: DefaultPassword}
-	token, status := Login(userId, authenticate)
+	token, status := Login(userId, DefaultPassword)
 	assert.Equal(t, status, http.StatusOK)
-	return token, userId, authenticate
+	return token, userId
 }
 
 func CreateCustomJWTToken(userId string, expirationTime int64, signKey *rsa.PrivateKey) string {

@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,13 +14,12 @@ import (
 )
 
 const (
-	userPath        = "/user"
 	createUserJson  = `{"password":"%s"}`
 	DefaultPassword = "SomeDefaultPassowrd"
 )
 
 func sendCreateUserIdRequest() *http.Response {
-	resp, err := http.Post(url+userPath, adapter.ContentTyp, nil)
+	resp, err := http.Post(url+adapter.AuthiRootPath, adapter.ContentTyp, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +32,7 @@ func sendCreateUserRequest(id string, userCreateJson string) *http.Response {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest(http.MethodPut, url+userPath+"/"+id, bytes.NewBuffer(jsonReq))
+	req, err := http.NewRequest(http.MethodPut, url+adapter.AuthiRootPath+"/"+id, bytes.NewBuffer(jsonReq))
 	if err != nil {
 		panic(err)
 	}
@@ -43,6 +43,44 @@ func sendCreateUserRequest(id string, userCreateJson string) *http.Response {
 	if err != nil {
 		panic(err)
 	}
+	return resp
+}
+
+func sendRefreshPasswordRequest(userId string, authenticate *Authenticate, token string) *http.Response {
+	userJson, err := json.Marshal(authenticate)
+	if err != nil {
+		panic(err)
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, url+adapter.AuthiRootPath+"/"+userId, bytes.NewBuffer(userJson))
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", adapter.ContentTyp)
+	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	return resp
+}
+
+func sendDeleteUserRequest(userId string, token string) *http.Response {
+	req, err := http.NewRequest(http.MethodDelete, url+adapter.AuthiRootPath+"/"+userId, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
 	return resp
 }
 
@@ -79,4 +117,16 @@ func CreateUserForFurtherTesting(t *testing.T) string {
 	status = CreateUser(userId, DefaultPassword)
 	assert.Equal(t, status, http.StatusCreated)
 	return userId
+}
+
+func UpdatePassword(userId string, password string, tokenString string) int {
+	response := sendRefreshPasswordRequest(userId, &Authenticate{Password: password}, tokenString)
+	defer response.Body.Close()
+	return response.StatusCode
+}
+
+func DeleteUser(userId string, tokenString string) int {
+	response := sendDeleteUserRequest(userId, tokenString)
+	defer response.Body.Close()
+	return response.StatusCode
 }

@@ -119,7 +119,7 @@ func (connection *PostgresConnection) CheckRefreshToken(userId uuid.UUID, refres
 }
 
 func (connection *PostgresConnection) UpdatePassword(userId uuid.UUID, password string, hash string) error {
-	if _, err := connection.dbPool.Exec(context.Background(), "UPDATE auth.user SET password=$1, salt=$2 WHERE id=$3", password+hash, hash, userId); err != nil {
+	if _, err := connection.dbPool.Exec(context.Background(), "UPDATE auth.user SET password=MD5($1), salt=$2 WHERE id=$3", password+hash, hash, userId); err != nil {
 		return fmt.Errorf("unknown error when updating password of user %s error: %v", userId, err)
 	}
 	return nil
