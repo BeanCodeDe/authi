@@ -57,12 +57,12 @@ func NewAuthiAdapter() AuthAdapter {
 func (authAdapter *AuthiAdapter) RefreshToken(userId string, token string, refreshToken string) (*TokenResponseDTO, error) {
 	client := &http.Client{}
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(authAdapter.authiLoginUrl, userId), nil)
+	req, err := http.NewRequest(http.MethodPatch, fmt.Sprintf(authAdapter.authiRefreshUrl, userId), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set(AuthorizationHeaderName, token)
+	req.Header.Set(AuthorizationHeaderName, "Bearer "+token)
 	req.Header.Set(RefreshTokenHeaderName, refreshToken)
 
 	resp, err := client.Do(req)

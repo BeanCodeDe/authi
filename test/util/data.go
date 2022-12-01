@@ -1,7 +1,7 @@
 package util
 
 const (
-	url = "http://localhost:1203"
+	Url = "http://localhost:1203"
 )
 
 type (

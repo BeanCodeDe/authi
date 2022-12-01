@@ -19,7 +19,7 @@ const (
 )
 
 func sendCreateUserIdRequest() *http.Response {
-	resp, err := http.Post(url+adapter.AuthiRootPath, adapter.ContentTyp, nil)
+	resp, err := http.Post(Url+adapter.AuthiRootPath, adapter.ContentTyp, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +32,7 @@ func sendCreateUserRequest(id string, userCreateJson string) *http.Response {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest(http.MethodPut, url+adapter.AuthiRootPath+"/"+id, bytes.NewBuffer(jsonReq))
+	req, err := http.NewRequest(http.MethodPut, Url+adapter.AuthiRootPath+"/"+id, bytes.NewBuffer(jsonReq))
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +52,7 @@ func sendRefreshPasswordRequest(userId string, authenticate *Authenticate, token
 		panic(err)
 	}
 
-	req, err := http.NewRequest(http.MethodPatch, url+adapter.AuthiRootPath+"/"+userId, bytes.NewBuffer(userJson))
+	req, err := http.NewRequest(http.MethodPatch, Url+adapter.AuthiRootPath+"/"+userId, bytes.NewBuffer(userJson))
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func sendRefreshPasswordRequest(userId string, authenticate *Authenticate, token
 }
 
 func sendDeleteUserRequest(userId string, token string) *http.Response {
-	req, err := http.NewRequest(http.MethodDelete, url+adapter.AuthiRootPath+"/"+userId, nil)
+	req, err := http.NewRequest(http.MethodDelete, Url+adapter.AuthiRootPath+"/"+userId, nil)
 	if err != nil {
 		panic(err)
 	}

@@ -31,7 +31,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 		panic(err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url+adapter.AuthiRootPath+"/"+userId+adapter.AuthiLoginPath, bytes.NewBuffer(userJson))
+	req, err := http.NewRequest(http.MethodPost, Url+adapter.AuthiRootPath+"/"+userId+adapter.AuthiLoginPath, bytes.NewBuffer(userJson))
 	if err != nil {
 		panic(err)
 	}
@@ -47,7 +47,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 }
 
 func sendRefreshTokenRequest(userId string, token string, refreshToken string) *http.Response {
-	req, err := http.NewRequest(http.MethodPatch, url+adapter.AuthiRootPath+"/"+userId+adapter.AuthiRefreshPath, nil)
+	req, err := http.NewRequest(http.MethodPatch, Url+adapter.AuthiRootPath+"/"+userId+adapter.AuthiRefreshPath, nil)
 	if err != nil {
 		panic(err)
 	}
