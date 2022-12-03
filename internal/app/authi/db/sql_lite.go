@@ -2,13 +2,21 @@ package db
 
 import (
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/util"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
+)
+
+var (
+	//go:embed migration/sqlite/*.up.sql
+	sqLiteMigrationFs embed.FS
 )
 
 type (
@@ -36,6 +44,7 @@ func newSqlLiteConnectionConnection() (Connection, error) {
 		return nil, fmt.Errorf("db file [%s] is not a file but a directory", dbFilePath)
 	}
 
+	err = migrateSqLiteDatabase(dbFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("error while creating db file in %s: %w", dbFilePath, err)
 	}
@@ -45,6 +54,22 @@ func newSqlLiteConnectionConnection() (Connection, error) {
 		return nil, fmt.Errorf("unable to open sql file: %v", err)
 	}
 	return &SqlLiteConnection{db}, nil
+}
+
+func migrateSqLiteDatabase(url string) error {
+	d, err := iofs.New(sqLiteMigrationFs, "migration/postgres")
+	if err != nil {
+		return fmt.Errorf("error while creating instance of migration scrips: %w", err)
+	}
+	m, err := migrate.NewWithSourceInstance("iofs", d, url)
+	if err != nil {
+		return fmt.Errorf("error while creating instance of migration scrips: %w", err)
+	}
+	err = m.Up()
+	if err != nil {
+		return fmt.Errorf("error while migrating: %w", err)
+	}
+	return nil
 }
 
 func (connection *SqlLiteConnection) Close() {

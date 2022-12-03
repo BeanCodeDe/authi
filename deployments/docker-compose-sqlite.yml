@@ -1,0 +1,26 @@
+version: '3.7'
+services:
+  authi:
+    build: 
+      context: ../
+      dockerfile: build/Dockerfile
+    image: "beancodede/authi:latest"
+    container_name: authi
+    restart: always
+    environment: 
+      - LOG_LEVEL=$LOG_LEVEL
+      - PUBLIC_KEY_PATH=$PUBLIC_KEY_PATH
+      - PRIVATE_KEY_PATH=$AUTH_PRIVATE_KEY_PATH
+    ports:
+      - 1203:1203
+    volumes: 
+      - public-key-volume:$PUBLIC_KEY_FOLDER_PATH
+      - $LOCAL_PRIVATE_KEY_PATH:$PRIVAT_KEY_FOLDER_PATH
+volumes:
+  public-key-volume:
+    name: public-key-volume
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: $LOCAL_PUBLIC_KEY_PATH

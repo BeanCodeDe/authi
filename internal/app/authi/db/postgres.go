@@ -23,7 +23,7 @@ import (
 
 var (
 	//go:embed migration/postgres/*.up.sql
-	migrationFs embed.FS
+	postgresMigrationFs embed.FS
 )
 
 type (
@@ -48,7 +48,7 @@ func newPostgresConnection() (Connection, error) {
 	}
 
 	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", user, password, host, port, dbName, options)
-	err = migrateDatabase(url)
+	err = migratePostgresDatabase(url)
 	if err != nil {
 		return nil, fmt.Errorf("error while migrating database: %w", err)
 	}
@@ -64,8 +64,8 @@ func (connection *PostgresConnection) Close() {
 	connection.dbPool.Close()
 }
 
-func migrateDatabase(url string) error {
-	d, err := iofs.New(migrationFs, "migration/postgres")
+func migratePostgresDatabase(url string) error {
+	d, err := iofs.New(postgresMigrationFs, "migration/postgres")
 	if err != nil {
 		return fmt.Errorf("error while creating instance of migration scrips: %w", err)
 	}
