@@ -1,8 +1,11 @@
 package db
 
 import (
+	"errors"
+	"strings"
 	"time"
 
+	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/google/uuid"
 )
 
@@ -23,3 +26,14 @@ type (
 		DeleteUser(userId uuid.UUID) error
 	}
 )
+
+func NewConnection() (Connection, error) {
+	switch db := strings.ToLower(util.GetEnvWithFallback("DATABASE", "SQLite")); db {
+	case "sqlite":
+		return newSqlLiteConnectionConnection()
+	case "postgresql":
+		return newPostgresConnection()
+	default:
+		return nil, errors.New("no configuration for %s found")
+	}
+}

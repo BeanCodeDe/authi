@@ -1,0 +1,43 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment: 
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5 
+  authi:
+    build: 
+      context: ../
+      dockerfile: build/Dockerfile
+    image: "beancodede/authi:latest"
+    container_name: authi
+    restart: always
+    environment: 
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - LOG_LEVEL=$LOG_LEVEL
+      - PUBLIC_KEY_PATH=$PUBLIC_KEY_PATH
+      - PRIVATE_KEY_PATH=$AUTH_PRIVATE_KEY_PATH
+      - DATABASE=postgresql
+    ports:
+      - 1203:1203
+    volumes: 
+      - public-key-volume:$PUBLIC_KEY_FOLDER_PATH
+      - $LOCAL_PRIVATE_KEY_PATH:$PRIVAT_KEY_FOLDER_PATH
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:postgres
+volumes:
+  public-key-volume:
+    name: public-key-volume
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: $LOCAL_PUBLIC_KEY_PATH

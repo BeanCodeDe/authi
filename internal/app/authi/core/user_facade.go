@@ -31,7 +31,7 @@ func NewUserFacade() (*UserFacade, error) {
 		return nil, err
 	}
 
-	dbConnection, err := db.NewPostgresConnection()
+	dbConnection, err := db.NewConnection()
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing database: %v", err)
 	}

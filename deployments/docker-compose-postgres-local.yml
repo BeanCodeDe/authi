@@ -4,15 +4,9 @@ services:
     image: postgres:latest
     restart: always
     environment: 
-      - POSTGRES_USER=$POSTGRES_USER
-      - POSTGRES_DB=$POSTGRES_DB
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-    ports:
-      - $POSTGRES_PORT:5432
-    volumes: 
-      - $LOCAL_INIT_SQL_PATH:/docker-entrypoint-initdb.d/
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5 
@@ -24,14 +18,11 @@ services:
     container_name: authi
     restart: always
     environment: 
-      - POSTGRES_USER=$AUTH_POSTGRES_USER
-      - POSTGRES_DB=$AUTH_POSTGRES_DB
-      - POSTGRES_PASSWORD=$AUTH_POSTGRES_PASSWORD
-      - POSTGRES_HOST=$POSTGRES_HOST
-      - POSTGRES_PORT=$POSTGRES_PORT
-      - LOG_LEVEL=$AUTH_LOG_LEVEL
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - LOG_LEVEL=$LOG_LEVEL
       - PUBLIC_KEY_PATH=$PUBLIC_KEY_PATH
       - PRIVATE_KEY_PATH=$AUTH_PRIVATE_KEY_PATH
+      - DATABASE=postgresql
     ports:
       - 1203:1203
     volumes: 

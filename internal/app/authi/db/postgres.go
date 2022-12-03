@@ -2,17 +2,28 @@ package db
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/config"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
+	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/lib/pq"
+)
+
+var (
+	//go:embed migration/postgres/*.up.sql
+	migrationFs embed.FS
 )
 
 type (
@@ -21,18 +32,28 @@ type (
 	}
 )
 
-func NewPostgresConnection() (*PostgresConnection, error) {
+func newPostgresConnection() (Connection, error) {
+	user := util.GetEnvWithFallback("POSTGRES_USER", "postgres")
+	dbName := util.GetEnvWithFallback("POSTGRES_DB", "postgres")
+	password, err := util.GetEnv("POSTGRES_PASSWORD")
+	if err != nil {
+		return nil, fmt.Errorf("postgres password has to be set: %w", err)
+	}
+	host := util.GetEnvWithFallback("POSTGRES_HOST", "postgres")
+	port, err := util.GetEnvIntWithFallback("POSTGRES_PORT", 5432)
+	options := util.GetEnvWithFallback("POSTGRES_OPTIONS", "sslmode=disable")
 
-	user := config.PostgresUser
-	name := config.PostgresDB
-	password := config.PostgresPassword
-	host := config.PostgresHost
-	port := config.PostgresPort
+	if err != nil {
+		return nil, fmt.Errorf("port is not a number: %w", err)
+	}
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, name)
-	var err error
-	dbPool, err := pgxpool.Connect(context.Background(), psqlInfo)
+	url := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", user, password, host, port, dbName, options)
+	err = migrateDatabase(url)
+	if err != nil {
+		return nil, fmt.Errorf("error while migrating database: %w", err)
+	}
+
+	dbPool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %v", err)
 	}
@@ -41,6 +62,22 @@ func NewPostgresConnection() (*PostgresConnection, error) {
 
 func (connection *PostgresConnection) Close() {
 	connection.dbPool.Close()
+}
+
+func migrateDatabase(url string) error {
+	d, err := iofs.New(migrationFs, "migration/postgres")
+	if err != nil {
+		return fmt.Errorf("error while creating instance of migration scrips: %w", err)
+	}
+	m, err := migrate.NewWithSourceInstance("iofs", d, url)
+	if err != nil {
+		return fmt.Errorf("error while creating instance of migration scrips: %w", err)
+	}
+	err = m.Up()
+	if err != nil {
+		return fmt.Errorf("error while migrating: %w", err)
+	}
+	return nil
 }
 
 func (connection *PostgresConnection) CreateUser(user *UserDB, hash string) error {
