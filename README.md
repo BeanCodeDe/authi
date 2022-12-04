@@ -63,6 +63,7 @@ ssh-keygen -t rsa -b 4096 -m PEM -f ./myTokenFolder/jwtRS256.key
 openssl rsa -in ./myTokenFolder/jwtRS256.key -pubout -outform PEM -out ./myTokenFolder/jwtRS256.key.pub
 ```
 
+>**Note**
 >You need the cli programmes `ssh-keygen` and `openssl` in order to execute these commands
 
 ### Start docker compose file
@@ -71,6 +72,7 @@ openssl rsa -in ./myTokenFolder/jwtRS256.key -pubout -outform PEM -out ./myToken
 docker compose up
 ```
 
+>**Note**
 >You need `docker` installed in order to execute this command
 
 ---
@@ -80,20 +82,20 @@ docker compose up
 The application can be started with different environment variables to configure specific behavior.
 
 
-| Name of environment variable | Description                                                           | Mandatory          | Default         |
-|:-----------------------------|:----------------------------------------------------------------------|:-------------------|:----------------|
-| LOG_LEVEL                    | Log level of console output. You can choose between debug, info, warn | :x:                | info            |
-| ADDRESS                      | Server address on that Authi runs                                     | :x:                | 0.0.0.0         |
-| PORT                         | Server port on that Authi runs                                        | :x:                | 1203            |
-| PRIVATE_KEY_PATH             | Path to the RSA private key file for signing jwt tokens               | :x:  | -               |
-| PUBLIC_KEY_PATH              | Path to the RSA public key to validate jwt tokens                     | :x:  | -               |
-| DATABASE                     | Used database to store user data                                      | :x:                | postgresql      |
-| POSTGRES_USER                | User of postgres database                                             | :x:                | postgres        |
-| POSTGRES_PASSWORD            | Password of postgres database                                         | :heavy_check_mark: | -               |
-| POSTGRES_DB                  | Database name that should be used in postgres                         | :x:                | postgres        |
-| POSTGRES_HOST                | Server address of Postgres database                                   | :x:                | postgres        |
-| POSTGRES_PORT                | Server port oft Postgres database                                     | :x:                | 5432            |
-| POSTGRES_OPTIONS             | Connection options of Postgres database                               | :x:                | sslmode=disable |
+| Name of environment variable | Description                                                           | Mandatory          | Default                 |
+|:-----------------------------|:----------------------------------------------------------------------|:-------------------|:------------------------|
+| LOG_LEVEL                    | Log level of console output. You can choose between debug, info, warn | :x:                | info                    |
+| ADDRESS                      | Server address on that Authi runs                                     | :x:                | 0.0.0.0                 |
+| PORT                         | Server port on that Authi runs                                        | :x:                | 1203                    |
+| PRIVATE_KEY_PATH             | Path to the RSA private key file for signing jwt tokens               | :x:                | /token/jwtRS256.key     |
+| PUBLIC_KEY_PATH              | Path to the RSA public key to validate jwt tokens                     | :x:                | /token/jwtRS256.key.pub |
+| DATABASE                     | Used database to store user data                                      | :x:                | postgresql              |
+| POSTGRES_USER                | User of postgres database                                             | :x:                | postgres                |
+| POSTGRES_PASSWORD            | Password of postgres database                                         | :heavy_check_mark: | -                       |
+| POSTGRES_DB                  | Database name that should be used in postgres                         | :x:                | postgres                |
+| POSTGRES_HOST                | Server address of Postgres database                                   | :x:                | postgres                |
+| POSTGRES_PORT                | Server port oft Postgres database                                     | :x:                | 5432                    |
+| POSTGRES_OPTIONS             | Connection options of Postgres database                               | :x:                | sslmode=disable         |
 
 ---
 
