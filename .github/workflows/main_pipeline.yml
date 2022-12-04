@@ -41,7 +41,7 @@ jobs:
         run: docker compose --file ./deployments/docker-compose-postgres.yml down
   
   CodeQL-Build:
-    needs: [journey_test_postgres, journey_test_sqlite]
+    needs: [journey_test_postgres]
     runs-on: ubuntu-latest
 
     permissions:
