@@ -12,6 +12,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
 
+      - name: Init project
+        run: make init
+
       - name: Unit test
         run: go test ./internal/... -v
 
@@ -23,7 +26,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
 
-      - name: Generate tokens
+      - name: Init project
         run: make init
 
       - name: Start environment
