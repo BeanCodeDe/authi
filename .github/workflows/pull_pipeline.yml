@@ -30,7 +30,7 @@ jobs:
         run: make init.token
 
       - name: Start environment
-        run: docker compose --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull --force-recreate -d
+        run: docker compose --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull -d
         env: 
           POSTGRES_PASSWORD:  ${{ secrets.POSTGRES_PASSWORD }}
 
