@@ -34,23 +34,6 @@ jobs:
       - name: Shutdown environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose-postgres.yml down
   
-  journey_test_sqlite:
-    needs: [unit_test]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-
-      - name: Start environment
-        run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose-sqlite.yml up --build --quiet-pull --force-recreate -d
-
-      - name: Journey tests
-        run: go test ./test -v
-      
-      - name: Shutdown environment
-        run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose-sqlite.yml down
-
   CodeQL-Build:
     needs: [journey_test_postgres, journey_test_sqlite]
     runs-on: ubuntu-latest

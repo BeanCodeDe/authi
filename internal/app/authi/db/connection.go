@@ -28,9 +28,7 @@ type (
 )
 
 func NewConnection() (Connection, error) {
-	switch db := strings.ToLower(util.GetEnvWithFallback("DATABASE", "SQLite")); db {
-	case "sqlite":
-		return newSqlLiteConnectionConnection()
+	switch db := strings.ToLower(util.GetEnvWithFallback("DATABASE", "postgresql")); db {
 	case "postgresql":
 		return newPostgresConnection()
 	default:

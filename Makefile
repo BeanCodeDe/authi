@@ -1,8 +1,8 @@
 SRC_PATH?=./cmd/authi
 APP_NAME?=authi
-DOCKER_COMPOSE_PATH?=./deployments/docker-compose-postgres.yml
+DOCKER_COMPOSE_PATH?=./deployments/docker-compose-sqlite.yml
 DOCKER_PATH?=./build/Dockerfile
-ENV_CONFIG?=./deployments/test.env
+ENV_CONFIG?=./deployments/local.env
 
 app.build:
 	go mod download
