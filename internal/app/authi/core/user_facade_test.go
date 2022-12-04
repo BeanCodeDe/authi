@@ -70,7 +70,7 @@ func TestCreateUser_CreateUser_AlreadyExists(t *testing.T) {
 // RefreshToken Test
 
 func TestRefreshToken_Successfully(t *testing.T) {
-	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
+	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
 	dbConnection := &ConnectionMock{}
 
 	signKey, err := loadSignKey()
@@ -122,7 +122,7 @@ func TestRefreshToken_CheckRefreshToken_UnknownError(t *testing.T) {
 }
 
 func TestRefreshToken_UpdateRefreshToken_UnknownError(t *testing.T) {
-	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
+	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
 	dbConnection := &ConnectionMock{updateRefreshTokenReturn: errUnknown}
 
 	signKey, err := loadSignKey()
@@ -152,7 +152,7 @@ func TestRefreshToken_UpdateRefreshToken_UnknownError(t *testing.T) {
 // LoginUser Test
 
 func TestLoginUser_Successfully(t *testing.T) {
-	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
+	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
 	dbConnection := &ConnectionMock{}
 
 	signKey, err := loadSignKey()
@@ -184,7 +184,7 @@ func TestLoginUser_Successfully(t *testing.T) {
 }
 
 func TestLoginUser_LoginUser_UnknownError(t *testing.T) {
-	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
+	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
 
 	dbConnection := &ConnectionMock{loginUserReturn: errUnknown}
 
@@ -209,7 +209,7 @@ func TestLoginUser_LoginUser_UnknownError(t *testing.T) {
 }
 
 func TestLoginUser_UpdateRefreshToken_UnknownError(t *testing.T) {
-	t.Setenv(PRIVATE_KEY_PATH_ENV, privateKeyPath)
+	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
 	dbConnection := &ConnectionMock{updateRefreshTokenReturn: errUnknown}
 
 	signKey, err := loadSignKey()

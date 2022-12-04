@@ -1,0 +1,42 @@
+name: MainPipeline
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  unit_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+
+      - name: Init project
+        run: make init.token
+
+      - name: Unit test
+        run: go test ./internal/... -v
+
+  journey_test_postgres:
+    needs: [unit_test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+
+      - name: Init project
+        run: make init.token
+
+      - name: Start environment
+        run: docker compose --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull -d
+        env: 
+          POSTGRES_PASSWORD:  ${{ secrets.POSTGRES_PASSWORD }}
+
+      - name: Journey tests
+        run: go test ./test -v
+      
+      - name: Shutdown environment
+        run: docker compose --file ./deployments/docker-compose-postgres.yml down
+  
