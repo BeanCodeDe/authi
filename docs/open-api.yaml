@@ -10,11 +10,11 @@ paths:
     post:
       tags:
         - Create User
-      summary: Get ID for new User
+      summary: Get ID for new user
       responses:
         '200':
           description: |-
-            Response with UUID for the User
+            Response with UUID for the user
           headers:
             Location:
               required: true
@@ -26,7 +26,7 @@ paths:
     put:
       tags:
         - Create User
-      summary: Create User with ID from post Request
+      summary: Create user with ID from post request
       parameters:
         - name: userId
           in: path
@@ -36,7 +36,7 @@ paths:
             type: string
             format: UUID
       requestBody:
-        description: Body with password for User
+        description: Body with password for user
         required: true
         content:
           application/json:
@@ -49,6 +49,55 @@ paths:
         '409':
           description: |-
             User already exists. Maybe you did a retry? 
+    patch:
+      tags:
+        - Update user password
+      summary: Update password of user
+      parameters:
+        - name: userId
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+            format: UUID
+      requestBody:
+        description: Body with new password for user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Authentication'
+      responses:
+        '204':
+          description: |-
+            User password successfully updated
+        '401':
+          description: |-
+            Not authorized to perform this action on user
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - delete user
+      summary: Delete user
+      parameters:
+        - name: userId
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+            format: UUID
+      responses:
+        '204':
+          description: |-
+            User successfully deleted
+        '401':
+          description: |-
+            Not authorized to perform this action on user
+      security:
+        - bearerAuth: []        
   /user/{userId}/login:
     post:
       tags:
