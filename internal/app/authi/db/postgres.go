@@ -75,6 +75,9 @@ func migratePostgresDatabase(url string) error {
 	}
 	err = m.Up()
 	if err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			return nil
+		}
 		return fmt.Errorf("error while migrating: %w", err)
 	}
 	return nil
