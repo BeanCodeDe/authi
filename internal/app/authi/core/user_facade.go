@@ -40,10 +40,7 @@ func NewUserFacade() (*UserFacade, error) {
 }
 
 func loadSignKey() (*rsa.PrivateKey, error) {
-	path, err := util.GetEnv(EnvPrivateKeyPath)
-	if err != nil {
-		return nil, fmt.Errorf("error while loading path to private key: %w", err)
-	}
+	path := util.GetEnvWithFallback(EnvPrivateKeyPath, "/token/jwtRS256.key")
 
 	signBytes, err := os.ReadFile(path)
 	if err != nil {

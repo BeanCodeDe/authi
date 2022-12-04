@@ -12,9 +12,6 @@ services:
       timeout: 5s
       retries: 5 
   authi:
-    build: 
-      context: ../
-      dockerfile: build/Dockerfile
     image: "beancodede/authi:latest"
     container_name: authi
     restart: always
@@ -23,7 +20,7 @@ services:
     ports:
       - 1203:1203
     volumes: 
-      - ./token:/token
+      - ./myTokenFolder:/token
     depends_on:
       postgres:
         condition: service_healthy

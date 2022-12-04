@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-go@v3
 
       - name: Init project
-        run: make init
+        run: make init.token
 
       - name: Unit test
         run: go test ./internal/... -v
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-go@v3
 
       - name: Init project
-        run: make init
+        run: make init.token
 
       - name: Start environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull --force-recreate -d

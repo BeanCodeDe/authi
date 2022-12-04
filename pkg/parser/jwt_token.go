@@ -37,10 +37,7 @@ type JWTParser struct {
 
 // Constructor to create jwt parser. public key path have to be set under environment variable PUBLIC_KEY_PATH
 func NewJWTParser() (Parser, error) {
-	publicKeyPath, err := util.GetEnv(EnvPublicKeyPath)
-	if err != nil {
-		return nil, fmt.Errorf("error while loading path to private key: %w", err)
-	}
+	publicKeyPath := util.GetEnvWithFallback(EnvPublicKeyPath, "/token/jwtRS256.key.pub")
 
 	verifyBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
