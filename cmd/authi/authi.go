@@ -2,14 +2,14 @@ package main
 
 import (
 	"github.com/BeanCodeDe/authi/internal/app/authi/api"
-	"github.com/BeanCodeDe/authi/internal/app/authi/config"
+	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/BeanCodeDe/authi/pkg/parser"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	setLogLevel(config.LogLevel)
+	setLogLevel()
 	log.Info("Start Server")
 
 	authAdapter := adapter.NewAuthiAdapter()
@@ -25,7 +25,8 @@ func main() {
 
 }
 
-func setLogLevel(logLevel string) {
+func setLogLevel() {
+	logLevel := util.GetEnvWithFallback("LOG_LEVEL", "info")
 	switch logLevel {
 	case "debug":
 		log.SetLevel(log.DebugLevel)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
 )
@@ -36,7 +37,11 @@ type JWTParser struct {
 
 // Constructor to create jwt parser. public key path have to be set under environment variable PUBLIC_KEY_PATH
 func NewJWTParser() (Parser, error) {
-	publicKeyPath := os.Getenv(EnvPublicKeyPath)
+	publicKeyPath, err := util.GetEnv(EnvPublicKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf("error while loading path to private key: %w", err)
+	}
+
 	verifyBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrWhileReadingKey, err)

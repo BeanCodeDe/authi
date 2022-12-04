@@ -9,6 +9,7 @@ import (
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
+	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -22,7 +23,7 @@ type (
 )
 
 const (
-	PRIVATE_KEY_PATH_ENV = "PRIVATE_KEY_PATH"
+	EnvPrivateKeyPath = "PRIVATE_KEY_PATH"
 )
 
 func NewUserFacade() (*UserFacade, error) {
@@ -39,7 +40,11 @@ func NewUserFacade() (*UserFacade, error) {
 }
 
 func loadSignKey() (*rsa.PrivateKey, error) {
-	path := os.Getenv(PRIVATE_KEY_PATH_ENV)
+	path, err := util.GetEnv(EnvPrivateKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf("error while loading path to private key: %w", err)
+	}
+
 	signBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("error while reading private Key: %v", err)

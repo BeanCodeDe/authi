@@ -7,6 +7,7 @@ import (
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
+	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	echoMiddleware "github.com/BeanCodeDe/authi/pkg/middleware"
 	"github.com/BeanCodeDe/authi/pkg/parser"
@@ -56,7 +57,13 @@ func NewUserApi(auth adapter.AuthAdapter, parser parser.Parser) (*UserApi, error
 	userGroup.PATCH("/:"+userIdParam, api.UpdatePassword, echoMiddleware.CheckToken)
 	userGroup.DELETE("/:"+userIdParam, api.DeleteUser, echoMiddleware.CheckToken)
 
-	e.Logger.Fatal(e.Start(":1203"))
+	address := util.GetEnvWithFallback("ADDRESS", "0.0.0.0")
+	port, err := util.GetEnvIntWithFallback("PORT", 1203)
+	if err != nil {
+		return nil, fmt.Errorf("error while loading port from environment variable: %w", err)
+	}
+	url := fmt.Sprintf("%s:%d", address, port)
+	e.Logger.Fatal(e.Start(url))
 
 	return api, nil
 }
