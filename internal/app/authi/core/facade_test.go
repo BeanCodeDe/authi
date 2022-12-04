@@ -64,7 +64,7 @@ var (
 	userId         = uuid.New()
 	refreshToken   = "someRefreshToken"
 	authenticate   = &adapter.AuthenticateDTO{}
-	privateKeyPath = "../../../../deployments/token/privat/jwtRS256.key"
+	privateKeyPath = "../../../../deployments/token/jwtRS256.key"
 	errUnknown     = errors.New("some error")
 )
 
