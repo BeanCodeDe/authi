@@ -25,6 +25,8 @@ jobs:
 
       - name: Start environment
         run: docker compose --env-file ./deployments/main.env --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull --force-recreate -d
+        env: 
+          POSTGRES_PASSWORD:  ${{ secrets.POSTGRES_PASSWORD }}
 
       - name: Journey tests
         run: go test ./test -v
