@@ -5,19 +5,27 @@ on:
     branches: [ main ]
 
 jobs:
-  release:
-      name: release linux/386
-      runs-on: ubuntu-latest
-      steps:
-      - uses: actions/checkout@master
-      - name: compile and release
-        uses: ngs/go-release.action@v1.0.1
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v3
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v3
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          version: latest
+          args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOARCH: "386"
-          GOOS: linux
-          CMD_PATH: "cmd/authi/authi.go"
-          EXTRA_FILES: "LICENSE"
 
   unit_test:
     runs-on: ubuntu-latest
