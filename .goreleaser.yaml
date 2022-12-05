@@ -1,2 +1,2 @@
 builds:
-- main: ./authi/cmd/authi/
+- main: ./cmd/authi/
