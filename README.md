@@ -108,6 +108,3 @@ The offered api interfaces can be find in this [Swagger UI](https://beancodede.g
 
 
 ---
-
-## Setting up project
-**TODO**

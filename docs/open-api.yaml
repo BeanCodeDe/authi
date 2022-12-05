@@ -12,12 +12,11 @@ paths:
         - Create User
       summary: Get ID for new user
       responses:
-        '200':
+        '201':
           description: |-
             Response with UUID for the user
-          headers:
-            Location:
-              required: true
+          content:
+            text/plain:
               schema:
                 type: string
                 format: UUID
