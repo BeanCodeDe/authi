@@ -1,7 +1,7 @@
 project_name: authi
 builds:
 - main: ./cmd/authi/
-  id: "{{.ProjectName}}"
+  id: "authi"
   binary: authi
   goos:
     - linux
@@ -9,7 +9,3 @@ builds:
     - windows
 env:
       - CGO_ENABLED=0
-dockers:
-  -
-    image_templates:
-    - "beancodede/{{.ProjectName}}"
