@@ -153,9 +153,8 @@ jobs:
         GOARCH: amd64
         GOOS: windows
         EXTRA_FILES: "LICENSE"
-
   docker-build:
-    needs: [build]
+    needs: [release-linux-386,release-linux-amd64,release-linux-arm,release-linux-arm64,release-darwin-amd64,release-windows-386,release-windows-amd64]
     runs-on: ubuntu-latest
 
     steps:
