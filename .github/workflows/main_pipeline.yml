@@ -62,8 +62,19 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  docker-build:
+  build:
     needs: [CodeQL-Build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: wangyoucao577/go-release-action@v1.34
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: linux
+        goarch: amd64
+
+  docker-build:
+    needs: [build]
     runs-on: ubuntu-latest
 
     steps:
