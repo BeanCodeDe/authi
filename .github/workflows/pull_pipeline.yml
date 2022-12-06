@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Increase version
         run: make version.up
-        
+      
   unit_test:
     needs: [increase_version]
     runs-on: ubuntu-latest
