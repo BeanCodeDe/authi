@@ -5,11 +5,8 @@ on:
     branches: [ main ]
 
 jobs:
-
-
   unit_test:
     runs-on: ubuntu-latest
-    needs: [releaser]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
