@@ -3,6 +3,9 @@ APP_NAME?=authi
 DOCKER_COMPOSE_PATH?=./deployments/docker-compose-postgres.yml
 DOCKER_PATH?=./build/Dockerfile
 
+version.up:
+	sh ./scripts/auto-increment-version.sh
+
 init.token:
 	sh ./scripts/generateKeyFile.sh
 
