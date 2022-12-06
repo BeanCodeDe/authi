@@ -104,7 +104,7 @@ func readTokenResponse(resp *http.Response) (*TokenResponseDTO, error) {
 
 	tokenResponse := new(TokenResponseDTO)
 	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
-		return nil, fmt.Errorf("%w: %w", errReadResponse, err)
+		return nil, fmt.Errorf("%w: %v", errReadResponse, err)
 	}
 	return tokenResponse, nil
 }
