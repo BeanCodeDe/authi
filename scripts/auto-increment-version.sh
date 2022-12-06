@@ -1,8 +1,9 @@
 #!/bin/bash
-#Credit https://gist.github.com/CSTDev
 
 #get highest tag number
 VERSION=`git describe --abbrev=0 --tags`
+
+echo $VERSION
 
 #replace . with space so can split into an array
 VERSION_BITS=(${VERSION//./ })
