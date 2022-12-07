@@ -17,8 +17,10 @@ jobs:
       
       - name: Set version
         run: |
+            git tag V0.0.1
+            git push --tags
             echo "version=`git describe --abbrev=0 --tags`" >> $GITHUB_ENV
-            echo "Version set to $env.version"
+            echo "Version set to ${{env.version}}"
 
   audit:
     needs: bump-version
@@ -69,7 +71,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - run: echo "$env.version"
+      - run: echo "${{env.version}}"
 
       - name: Build and push
         id: docker_build
@@ -77,7 +79,7 @@ jobs:
         with:
           push: true
           tags: |
-            $env.version
+            ${{env.version}}
             latest
           build-args: |
             ${{steps.version_step.outputs.version}}
