@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
     
-      - name: Run bump version script
-        run: make version.up
+      #- name: Run bump version script
+      #  run: make version.up
       
       - name: Set version
         run: |
