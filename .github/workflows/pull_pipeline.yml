@@ -2,7 +2,7 @@ name: MainPipeline
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ mains ]
 
 jobs:
   increase_version:
