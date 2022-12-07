@@ -17,9 +17,12 @@ jobs:
       
       - name: Set version
         run: |
+            git describe --abbrev=0 --tags
             git tag V0.0.1
             git push --tags
-            echo "version=`git describe --abbrev=0 --tags`" >> $GITHUB_ENV
+            git describe --abbrev=0 --tags
+            version=`git describe --abbrev=0 --tags`
+            echo "version=${version}" >> $GITHUB_ENV
             echo "Version set to ${{env.version}}"
 
   audit:
