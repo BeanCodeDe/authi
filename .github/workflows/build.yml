@@ -11,12 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          git tag v0.0.1
-          git push --tags
     
       - name: Run bump version script
         run: make version.up
+      
+      - name: Set version
+        run: |
+            VERSION=`git describe --abbrev=0 --tags`
+            echo version=$VERSION >> $GITHUB_ENV
+            echo "Version set to $env.version"
 
   audit:
     needs: bump-version
@@ -67,13 +70,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+  
+
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
           tags: |
-            ${{env.VERSION_TAG}}
-            ${{env.LASTEST_TAG}}
+            $env.version
+            latest
           build-args: |
             ${{steps.version_step.outputs.version}}
