@@ -17,8 +17,7 @@ jobs:
       
       - name: Set version
         run: |
-            VERSION=`git describe --abbrev=0 --tags`
-            echo version=$VERSION >> $GITHUB_ENV
+            echo "version=`git describe --abbrev=0 --tags`" >> $GITHUB_ENV
             echo "Version set to $env.version"
 
   audit:
@@ -70,7 +69,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  
+      - run: echo "$env.version"
 
       - name: Build and push
         id: docker_build
