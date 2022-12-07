@@ -10,10 +10,13 @@ jobs:
   bump-version:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+    
       - name: Run bump version script
         run: git tag v0.0.1
 
   audit:
+    needs: bump-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
