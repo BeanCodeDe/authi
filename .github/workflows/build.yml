@@ -68,7 +68,7 @@ jobs:
 
       - name: Build the Docker image
         run: |
-          TAG=`git describe --abbrev=0 --tags`
+          TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
           docker build . -f ./build/Dockerfile --tag beancodede/authi:latest --tag beancodede/authi:$TAG
       
       - name: Push the Docker image
