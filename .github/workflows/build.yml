@@ -7,23 +7,7 @@ on:
     branches: [release-build]
 
 jobs:
-  bump-version:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        fetch-depth: '0'
-
-    - id: version_bump
-      name: Bump version and push tag
-      uses: anothrNick/github-tag-action@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        WITH_V: true
-
   audit:
-    needs: bump-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -54,6 +38,24 @@ jobs:
     - name: Unit test
       run: go test -race -vet=off ./internal/...
 
+  bump-version:
+    needs: audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: '0'
+
+    - id: version_bump
+      name: Bump version and push tag
+      uses: anothrNick/github-tag-action@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: true
+    - name: test
+      run: echo ${{ steps.version_bump.outputs.tag }}
+
   deploy:
     runs-on: ubuntu-latest
     needs: audit
@@ -66,10 +68,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: test
+        run: echo ${{ steps.version_bump.outputs.tag }}
+
       - name: Build the Docker image
         run: |
           TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          docker build . -f ./build/Dockerfile --tag beancodede/authi:latest --tag beancodede/authi:$TAG
+          docker build . -f ./build/Dockerfile --tag beancodede/authi:latest --tag beancodede/authi:${{ steps.version_bump.outputs.tag }}
       
       - name: Push the Docker image
         run: docker push beancodede/authi:latest
