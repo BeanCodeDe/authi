@@ -41,12 +41,12 @@ func NewJWTParser() (Parser, error) {
 
 	verifyBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrWhileReadingKey, err)
+		return nil, fmt.Errorf("%w: %v", ErrWhileReadingKey, err)
 	}
 
 	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrWhileParsingKey, err)
+		return nil, fmt.Errorf("%w: %v", ErrWhileParsingKey, err)
 	}
 	return &JWTParser{verifyKey: verifyKey}, nil
 }
@@ -64,11 +64,11 @@ func (parser *JWTParser) ParseToken(authorizationString string) (*adapter.Claims
 		return parser.verifyKey, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrClaimCouldNotBeParsed, err)
+		return nil, fmt.Errorf("%w: %v", ErrClaimCouldNotBeParsed, err)
 	}
 
 	if tkn == nil || !tkn.Valid {
-		return nil, fmt.Errorf("%w: %w", ErrTokenNotValid, err)
+		return nil, fmt.Errorf("%w: %v", ErrTokenNotValid, err)
 	}
 
 	return claims, nil
