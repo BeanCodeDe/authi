@@ -1,10 +1,8 @@
-name: Build
+name: Audit & Deploy
 
 on:
   push:
-    branches: [release-build]
-  pull_request:
-    branches: [release-build]
+    branches: [main]
 
 jobs:
   audit:
