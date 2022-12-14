@@ -6,7 +6,6 @@ on:
   
 jobs:
   CodeQL-Build:
-    needs: [journey_test_postgres]
     runs-on: ubuntu-latest
 
     permissions:
