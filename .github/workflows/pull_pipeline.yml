@@ -36,8 +36,30 @@ jobs:
     - name: Unit test
       run: go test -race -vet=off ./internal/...
 
+  CodeQL-Build:
+    needs: [journey_test_postgres]
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with: 
+          languages: go
+
+      - name: Auto build
+        uses: github/codeql-action/autobuild@v2 
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
   journey_test_postgres:
-    needs: [audit]
+    needs: [CodeQL-Build]
     runs-on: ubuntu-latest
 
     steps:
