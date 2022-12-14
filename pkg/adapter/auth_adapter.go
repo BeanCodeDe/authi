@@ -2,6 +2,10 @@
 package adapter
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
@@ -29,3 +33,18 @@ type (
 		Password string `json:"password" validate:"required"`
 	}
 )
+
+// Method to handle response with token
+func readTokenResponse(resp *http.Response) (*TokenResponseDTO, error) {
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w but: %v", errStatusNotOk, resp.StatusCode)
+	}
+
+	tokenResponse := new(TokenResponseDTO)
+	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
+		return nil, fmt.Errorf("%w: %v", errReadResponse, err)
+	}
+	return tokenResponse, nil
+}

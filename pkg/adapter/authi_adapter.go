@@ -93,18 +93,3 @@ func (authAdapter *AuthiAdapter) GetToken(userId string, password string) (*Toke
 
 	return readTokenResponse(resp)
 }
-
-// Method to handle response with token
-func readTokenResponse(resp *http.Response) (*TokenResponseDTO, error) {
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w but: %v", errStatusNotOk, resp.StatusCode)
-	}
-
-	tokenResponse := new(TokenResponseDTO)
-	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
-		return nil, fmt.Errorf("%w: %v", errReadResponse, err)
-	}
-	return tokenResponse, nil
-}
