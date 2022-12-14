@@ -36,6 +36,28 @@ jobs:
     - name: Unit test
       run: go test -race -vet=off ./internal/...
 
+  journey_test_postgres:
+    needs: [audit]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+
+      - name: Init project
+        run: make init.token
+
+      - name: Start environment
+        run: docker compose --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull -d
+        env: 
+          POSTGRES_PASSWORD:  ${{ secrets.POSTGRES_PASSWORD }}
+
+      - name: Journey tests
+        run: go test ./test -v
+      
+      - name: Shutdown environment
+        run: docker compose --file ./deployments/docker-compose-postgres.yml down
+
   CodeQL-Build:
     needs: [journey_test_postgres]
     runs-on: ubuntu-latest
@@ -57,25 +79,3 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
-
-  journey_test_postgres:
-    needs: [CodeQL-Build]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-
-      - name: Init project
-        run: make init.token
-
-      - name: Start environment
-        run: docker compose --file ./deployments/docker-compose-postgres.yml up --build --quiet-pull -d
-        env: 
-          POSTGRES_PASSWORD:  ${{ secrets.POSTGRES_PASSWORD }}
-
-      - name: Journey tests
-        run: go test ./test -v
-      
-      - name: Shutdown environment
-        run: docker compose --file ./deployments/docker-compose-postgres.yml down
