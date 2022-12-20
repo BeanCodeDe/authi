@@ -1,4 +1,4 @@
-name: Audit & Deploy
+name: Audit_And_Deploy
 
 on:
   push:
