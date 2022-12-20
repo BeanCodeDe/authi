@@ -25,7 +25,7 @@ func TestAuthWrongFormatAccessToken(t *testing.T) {
 
 func TestAuthWrongUserIdToken(t *testing.T) {
 	token, userId := util.ObtainToken(t)
-	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
+	signKey := util.LoadPrivateKeyFile(util.PrivateKeyFile)
 	customToken := util.CreateCustomJWTToken(uuid.NewString(), time.Now().Add(30*time.Minute).Unix(), signKey)
 	_, status := util.RefreshToken(userId, customToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
@@ -39,7 +39,7 @@ func TestAuthWrongUserIdPath(t *testing.T) {
 
 func TestAuthExpiredToken(t *testing.T) {
 	token, userId := util.ObtainToken(t)
-	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
+	signKey := util.LoadPrivateKeyFile(util.PrivateKeyFile)
 	customToken := util.CreateCustomJWTToken(userId, time.Now().Add(-1*time.Second).Unix(), signKey)
 	_, status := util.RefreshToken(userId, customToken, token.RefreshToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
