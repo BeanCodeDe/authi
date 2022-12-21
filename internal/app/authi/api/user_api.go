@@ -36,13 +36,13 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
-func NewUserApi(auth adapter.AuthAdapter, parser parser.Parser) (*UserApi, error) {
+func NewUserApi(parser parser.Parser) (*UserApi, error) {
 	userFacade, err := core.NewUserFacade()
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing user facade: %v", err)
 	}
 
-	echoMiddleware := echoMiddleware.NewEchoMiddleware(auth, parser)
+	echoMiddleware := echoMiddleware.NewEchoMiddleware(parser)
 	api := &UserApi{userFacade}
 
 	e := echo.New()

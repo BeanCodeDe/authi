@@ -10,7 +10,6 @@ import (
 type (
 	//Implementation of middleware interface
 	EchoMiddleware struct {
-		auth        adapter.AuthAdapter
 		tokenParser parser.Parser
 	}
 
@@ -21,8 +20,8 @@ type (
 )
 
 // Constructor to creat new EchoMiddleware
-func NewEchoMiddleware(auth adapter.AuthAdapter, tokenParser parser.Parser) Middleware {
-	return &EchoMiddleware{auth, tokenParser}
+func NewEchoMiddleware(tokenParser parser.Parser) Middleware {
+	return &EchoMiddleware{tokenParser}
 }
 
 // Check if incoming token is valid and set claim in context with key claim
