@@ -96,15 +96,118 @@ The application can be started with different environment variables to configure
 | POSTGRES_HOST                | Server address of Postgres database                                   | :x:                | postgres                |
 | POSTGRES_PORT                | Server port oft Postgres database                                     | :x:                | 5432                    |
 | POSTGRES_OPTIONS             | Connection options of Postgres database                               | :x:                | sslmode=disable         |
+| ACCESS_TOKEN_EXPIRE_TIME     | Time in minutes till an access token is no longer valid               | :x:                | 5                       |
+| REFRESH_TOKEN_EXPIRE_TIME    | Time in minutes till an refresh token is no longer valid              | :x:                | 10                      |
 
 ---
-
-## Adapter
-
-**TODO**
 
 ## API Interface
 The offered api interfaces can be find in this [Swagger UI](https://beancodede.github.io/authi/) or in the folder [/docs](https://github.com/BeanCodeDe/authi/tree/main/docs).
 
+## Adapter
+
+To access the authi service from other go echo application, you can use the methods within the adapter package. Therefore two methods are provided:
+
+```Go
+GetToken(userId string, password string) (*TokenResponseDTO, error)
+```
+to get an access and refresh token with your userId and password.
+
+
+```Go
+RefreshToken(userId string, token string, refreshToken string) (*TokenResponseDTO, error)
+```
+to refresh your token for a logged in user without passing the password again.
+
+>**Note**
+>You can only refresh tokens as long as your token and refresh token are valid. 
+
+
+To initial an authi adapter you have to use the method `NewAuthiAdapter()` within the adapter package.
+
+The whole code could look like this:
+
+```Go
+func AdapterExample() {
+
+	//User id that were previously created over REST
+	userId := "693227c8-4178-4e72-b3b7-a8b8bae36f1b"
+
+	//Initialize authi adapter
+	authiAdapter := adapter.NewAuthiAdapter()
+
+	//Logging in previously created user with password `mySecretUserPassword`
+	token, err := authiAdapter.GetToken(userId, "mySecretUserPassword")
+
+	//Checking if an error occurred while loading user token
+	if err != nil {
+		panic(err)
+	}
+
+	//Printing access token for example
+	fmt.Println(token.AccessToken)
+
+	//Printing refresh token for example
+	fmt.Println(token.RefreshToken)
+
+	//Refreshing tokens to avoid outdated tokens
+	refreshedToken, err := authiAdapter.RefreshToken(userId, token.AccessToken, token.RefreshToken)
+
+	//Checking if an error occurred while loading refreshed token
+	if err != nil {
+		panic(err)
+	}
+
+	//Printing refreshed access token for example
+	fmt.Println(refreshedToken.AccessToken)
+
+	//Printing refreshed refresh token for example
+	fmt.Println(refreshedToken.RefreshToken)
+}
+```
+
+## Middleware
+
+If you write an echo go application, you also have the possibility to use the already attached middleware. Therefore you can orientate on the following example code:
+
+
+```Go
+func MiddlewareExample() {
+	//Initialize parser to validate Tokens
+	tokenParser, err := parser.NewJWTParser()
+
+	//Checking if an error occurred while loading jwt parser
+	if err != nil {
+		panic(err)
+	}
+
+	//Initialize middleware
+	echoMiddleware := echoMiddleware.NewEchoMiddleware(tokenParser)
+
+	//Initialize echo
+	e := echo.New()
+
+	//Secure endpoint with method `echoMiddleware.CheckToken`
+	e.GET(
+		"/someEndpoint",
+		func(c echo.Context) error { return c.NoContent(201) },
+		echoMiddleware.CheckToken,
+	)
+}
+```
+
+>**Note**
+>In order for the code to work properly, the environment variable `PUBLIC_KEY_PATH` must point to the appropriate public key of the Authi server
+
+
+While using the middleware the following errors could occur:
+
+| Error                    | Description                                   | Instruction                                                                                                                                   |
+|:-------------------------|:----------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------|
+| ErrTokenNotFound         | Token was not found in request                | Does the passed token starts with "Bearer "; Is the token set in header `Authorization` inside the request                                    |
+| ErrClaimCouldNotBeParsed | Token is valid but Claim format is unexpected | Are you using compatible version? Otherwise please create an issue                                                                            |
+| ErrTokenNotValid         | Token is not valid                            | A different key file may be used here for checking than is used in the Authi service. Otherwise, the token may have expired.                  |
+| ErrWhileReadingKey       | Key file couldn't be read                     | Maybe the file is not on the correct position. Check your environment variable `PUBLIC_KEY_PATH`                                              |
+| ErrWhileParsingKey       | Key file couldn't be parsed                   | Maybe the file has not the correct format. Use the commands from `Execute the following two commands to generate key's` to generate key files |
 
 ---

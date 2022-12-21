@@ -17,13 +17,17 @@ import (
 
 type (
 	UserFacade struct {
-		dbConnection db.Connection
-		signKey      *rsa.PrivateKey
+		dbConnection           db.Connection
+		signKey                *rsa.PrivateKey
+		accessTokenExpireTime  int
+		refreshTokenExpireTime int
 	}
 )
 
 const (
-	EnvPrivateKeyPath = "PRIVATE_KEY_PATH"
+	EnvPrivateKeyPath         = "PRIVATE_KEY_PATH"
+	EnvAccessTokenExpireTime  = "ACCESS_TOKEN_EXPIRE_TIME"
+	EnvRefreshTokenExpireTime = "REFRESH_TOKEN_EXPIRE_TIME"
 )
 
 func NewUserFacade() (*UserFacade, error) {
@@ -36,7 +40,16 @@ func NewUserFacade() (*UserFacade, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error while initializing database: %v", err)
 	}
-	return &UserFacade{dbConnection, signKey}, nil
+
+	accessTokenExpireTime, err := util.GetEnvIntWithFallback(EnvAccessTokenExpireTime, 5)
+	if err != nil {
+		return nil, fmt.Errorf("error loading access token expire time from environment: %w", err)
+	}
+	refreshTokenExpireTime, err := util.GetEnvIntWithFallback(EnvRefreshTokenExpireTime, 10)
+	if err != nil {
+		return nil, fmt.Errorf("error loading refresh token expire time from environment: %w", err)
+	}
+	return &UserFacade{dbConnection, signKey, accessTokenExpireTime, refreshTokenExpireTime}, nil
 }
 
 func loadSignKey() (*rsa.PrivateKey, error) {
@@ -103,8 +116,8 @@ func (userFacade *UserFacade) DeleteUser(userId uuid.UUID) error {
 
 func (userFacade *UserFacade) createJWTToken(userId uuid.UUID) (*adapter.TokenResponseDTO, error) {
 
-	tokenExpireAt := time.Now().Add(5 * time.Minute).Unix()
-	refreshTokenExpireAt := time.Now().Add(10 * time.Minute)
+	tokenExpireAt := time.Now().Add(time.Duration(userFacade.accessTokenExpireTime) * time.Minute).Unix()
+	refreshTokenExpireAt := time.Now().Add(time.Duration(userFacade.refreshTokenExpireTime) * time.Minute)
 
 	claimsToken := &adapter.Claims{
 		UserId: userId,
