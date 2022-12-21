@@ -75,7 +75,7 @@ func TestRefreshToken_Successfully(t *testing.T) {
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
-	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey}
+	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey, accessTokenExpireTime: 5, refreshTokenExpireTime: 10}
 
 	tokenResponseDTO, err := userFacade.RefreshToken(userId, refreshToken)
 	assert.Nil(t, err)
@@ -127,7 +127,7 @@ func TestRefreshToken_UpdateRefreshToken_UnknownError(t *testing.T) {
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
-	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey}
+	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey, accessTokenExpireTime: 5, refreshTokenExpireTime: 10}
 
 	tokenResponseDTO, err := userFacade.RefreshToken(userId, refreshToken)
 	assert.Equal(t, 0, len(dbConnection.closeRecordArray))
@@ -157,7 +157,7 @@ func TestLoginUser_Successfully(t *testing.T) {
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
-	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey}
+	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey, accessTokenExpireTime: 5, refreshTokenExpireTime: 10}
 
 	tokenResponseDTO, err := userFacade.LoginUser(userId, authenticate)
 	assert.Nil(t, err)
@@ -214,7 +214,7 @@ func TestLoginUser_UpdateRefreshToken_UnknownError(t *testing.T) {
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
-	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey}
+	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey, accessTokenExpireTime: 5, refreshTokenExpireTime: 10}
 
 	tokenResponseDTO, err := userFacade.LoginUser(userId, authenticate)
 	assert.Equal(t, 0, len(dbConnection.closeRecordArray))
