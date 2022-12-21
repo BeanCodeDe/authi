@@ -33,8 +33,11 @@ jobs:
     - name: Init project
       run: make init.token
 
-    - name: Unit test
+    - name: Unit test internal
       run: go test -race -vet=off ./internal/...
+    
+    - name: Unit test pgk
+      run: go test -race -vet=off ./pkg/...
 
   journey_test_postgres:
     needs: [audit]
