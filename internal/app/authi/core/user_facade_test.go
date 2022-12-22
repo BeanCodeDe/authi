@@ -11,7 +11,7 @@ import (
 // CreateUser Test
 
 func TestCreateUser_Successfully(t *testing.T) {
-	dbConnection := &db.DBMock{}
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.CreateUser(userId, authenticate)
@@ -72,7 +72,7 @@ func TestCreateUser_CreateUser_AlreadyExistsWrongPassword(t *testing.T) {
 }
 
 func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
-	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: db.ErrUserAlreadyExists}}}
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: db.ErrUserAlreadyExists}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.CreateUser(userId, authenticate)
@@ -97,7 +97,7 @@ func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
 
 func TestRefreshToken_Successfully(t *testing.T) {
 	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
-	dbConnection := &db.DBMock{}
+	dbConnection := &db.DBMock{UpdateRefreshTokenResponseArray: []*db.ErrorResponse{{Err: nil}}, CheckRefreshTokenResponseArray: []*db.ErrorResponse{{Err: nil}}}
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
@@ -127,7 +127,7 @@ func TestRefreshToken_Successfully(t *testing.T) {
 }
 
 func TestRefreshToken_CheckRefreshToken_UnknownError(t *testing.T) {
-	dbConnection := &db.DBMock{CheckRefreshResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
+	dbConnection := &db.DBMock{CheckRefreshTokenResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
@@ -149,7 +149,7 @@ func TestRefreshToken_CheckRefreshToken_UnknownError(t *testing.T) {
 
 func TestRefreshToken_UpdateRefreshToken_UnknownError(t *testing.T) {
 	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
-	dbConnection := &db.DBMock{UpdateRefreshResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
+	dbConnection := &db.DBMock{UpdateRefreshTokenResponseArray: []*db.ErrorResponse{{Err: errUnknown}}, CheckRefreshTokenResponseArray: []*db.ErrorResponse{{Err: nil}}}
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
@@ -179,7 +179,7 @@ func TestRefreshToken_UpdateRefreshToken_UnknownError(t *testing.T) {
 
 func TestLoginUser_Successfully(t *testing.T) {
 	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
-	dbConnection := &db.DBMock{}
+	dbConnection := &db.DBMock{UpdateRefreshTokenResponseArray: []*db.ErrorResponse{{Err: nil}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
@@ -236,7 +236,7 @@ func TestLoginUser_LoginUser_UnknownError(t *testing.T) {
 
 func TestLoginUser_UpdateRefreshToken_UnknownError(t *testing.T) {
 	t.Setenv(EnvPrivateKeyPath, privateKeyPath)
-	dbConnection := &db.DBMock{UpdateRefreshResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
+	dbConnection := &db.DBMock{UpdateRefreshTokenResponseArray: []*db.ErrorResponse{{Err: errUnknown}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 
 	signKey, err := loadSignKey()
 	assert.Nil(t, err)
@@ -265,7 +265,7 @@ func TestLoginUser_UpdateRefreshToken_UnknownError(t *testing.T) {
 
 // UpdatePassword Test
 func TestUpdatePassword_Successfully(t *testing.T) {
-	dbConnection := &db.DBMock{}
+	dbConnection := &db.DBMock{UpdatePasswordResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.UpdatePassword(userId, authenticate)
@@ -285,7 +285,7 @@ func TestUpdatePassword_Successfully(t *testing.T) {
 }
 
 func TestUpdatePassword_UnknownError(t *testing.T) {
-	dbConnection := &db.DBMock{UpdateRefreshResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
+	dbConnection := &db.DBMock{UpdatePasswordResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.UpdatePassword(userId, authenticate)
@@ -307,7 +307,7 @@ func TestUpdatePassword_UnknownError(t *testing.T) {
 // DeleteUser Test
 
 func TestDeleteUser_Successfully(t *testing.T) {
-	dbConnection := &db.DBMock{}
+	dbConnection := &db.DBMock{DeleteUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.DeleteUser(userId)

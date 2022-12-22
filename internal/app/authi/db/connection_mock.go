@@ -8,19 +8,19 @@ import (
 
 type (
 	DBMock struct {
-		CloseRecordArray              []*CloseRecord
-		CreateUserRecordArray         []*CreateUserRecord
-		UpdateRefreshTokenRecordArray []*UpdateRefreshTokenRecord
-		LoginUserRecordArray          []*LoginUserRecord
-		CheckRefreshTokenRecordArray  []*CheckRefreshTokenRecord
-		UpdatePasswordRecordArray     []*UpdatePasswordRecord
-		DeleteUserRecordArray         []*DeleteUserRecord
-		CreateUserResponseArray       []*ErrorResponse
-		UpdateRefreshResponseArray    []*ErrorResponse
-		LoginUserResponseArray        []*ErrorResponse
-		CheckRefreshResponseArray     []*ErrorResponse
-		UpdatePasswordResponseArray   []*ErrorResponse
-		DeleteUserResponseArray       []*ErrorResponse
+		CloseRecordArray                []*CloseRecord
+		CreateUserRecordArray           []*CreateUserRecord
+		UpdateRefreshTokenRecordArray   []*UpdateRefreshTokenRecord
+		LoginUserRecordArray            []*LoginUserRecord
+		CheckRefreshTokenRecordArray    []*CheckRefreshTokenRecord
+		UpdatePasswordRecordArray       []*UpdatePasswordRecord
+		DeleteUserRecordArray           []*DeleteUserRecord
+		CreateUserResponseArray         []*ErrorResponse
+		UpdateRefreshTokenResponseArray []*ErrorResponse
+		LoginUserResponseArray          []*ErrorResponse
+		CheckRefreshTokenResponseArray  []*ErrorResponse
+		UpdatePasswordResponseArray     []*ErrorResponse
+		DeleteUserResponseArray         []*ErrorResponse
 	}
 
 	ErrorResponse struct {
@@ -67,41 +67,41 @@ func (mock *DBMock) Close() {
 func (mock *DBMock) CreateUser(user *UserDB, hash string) error {
 	record := &CreateUserRecord{User: user, Hash: hash}
 	mock.CreateUserRecordArray = append(mock.CreateUserRecordArray, record)
-	response := mock.CreateUserResponseArray[len(mock.CreateUserResponseArray)-1]
+	response := mock.CreateUserResponseArray[len(mock.CreateUserRecordArray)-1]
 	return response.Err
 }
 
 func (mock *DBMock) UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
-	record := &UpdateRefreshTokenRecord{UserId: userId, RefreshToken: refreshToken}
+	record := &UpdateRefreshTokenRecord{UserId: userId, RefreshToken: refreshToken, RefreshTokenExpireAt: refreshTokenExpireAt}
 	mock.UpdateRefreshTokenRecordArray = append(mock.UpdateRefreshTokenRecordArray, record)
-	response := mock.UpdatePasswordResponseArray[len(mock.UpdatePasswordResponseArray)-1]
+	response := mock.UpdateRefreshTokenResponseArray[len(mock.UpdateRefreshTokenRecordArray)-1]
 	return response.Err
 }
 
 func (mock *DBMock) LoginUser(user *UserDB) error {
 	record := &LoginUserRecord{User: user}
 	mock.LoginUserRecordArray = append(mock.LoginUserRecordArray, record)
-	response := mock.LoginUserResponseArray[len(mock.LoginUserResponseArray)-1]
+	response := mock.LoginUserResponseArray[len(mock.LoginUserRecordArray)-1]
 	return response.Err
 }
 
 func (mock *DBMock) CheckRefreshToken(userId uuid.UUID, refreshToken string) error {
 	record := &CheckRefreshTokenRecord{UserId: userId, RefreshToken: refreshToken}
 	mock.CheckRefreshTokenRecordArray = append(mock.CheckRefreshTokenRecordArray, record)
-	response := mock.CheckRefreshResponseArray[len(mock.CheckRefreshResponseArray)-1]
+	response := mock.CheckRefreshTokenResponseArray[len(mock.CheckRefreshTokenRecordArray)-1]
 	return response.Err
 }
 
 func (mock *DBMock) UpdatePassword(userId uuid.UUID, password string, hash string) error {
-	record := &UpdatePasswordRecord{UserId: userId, Password: password}
+	record := &UpdatePasswordRecord{UserId: userId, Password: password, Hash: hash}
 	mock.UpdatePasswordRecordArray = append(mock.UpdatePasswordRecordArray, record)
-	response := mock.UpdatePasswordResponseArray[len(mock.UpdatePasswordResponseArray)-1]
+	response := mock.UpdatePasswordResponseArray[len(mock.UpdatePasswordRecordArray)-1]
 	return response.Err
 }
 
 func (mock *DBMock) DeleteUser(userId uuid.UUID) error {
 	record := &DeleteUserRecord{UserId: userId}
 	mock.DeleteUserRecordArray = append(mock.DeleteUserRecordArray, record)
-	response := mock.DeleteUserResponseArray[len(mock.DeleteUserResponseArray)-1]
+	response := mock.DeleteUserResponseArray[len(mock.DeleteUserRecordArray)-1]
 	return response.Err
 }
