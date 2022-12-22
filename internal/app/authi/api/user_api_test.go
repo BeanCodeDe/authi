@@ -32,7 +32,7 @@ func TestCreateUserId_Successfully(t *testing.T) {
 // CreateUser Tests
 
 func TestCreateUser_Successfully(t *testing.T) {
-	facade := &core.CoreMock{CreateUserResponseArray: []*core.ErrorResponse{{nil}}}
+	facade := &core.CoreMock{CreateUserResponseArray: []*core.ErrorResponse{{Err: nil}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -60,7 +60,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 }
 
 func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
-	facade := &core.CoreMock{CreateUserResponseArray: []*core.ErrorResponse{{errSome}}}
+	facade := &core.CoreMock{CreateUserResponseArray: []*core.ErrorResponse{{Err: errSome}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -206,7 +206,7 @@ func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
 // Update Password Test
 
 func TestUpdatePassword_Successfully(t *testing.T) {
-	facade := &core.CoreMock{UpdatePasswordResponseArray: []*core.ErrorResponse{{nil}}}
+	facade := &core.CoreMock{UpdatePasswordResponseArray: []*core.ErrorResponse{{Err: nil}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -235,7 +235,7 @@ func TestUpdatePassword_Successfully(t *testing.T) {
 }
 
 func TestUpdatePassword_UpdatePassword_ErrUnauthorized(t *testing.T) {
-	facade := &core.CoreMock{UpdatePasswordResponseArray: []*core.ErrorResponse{{errSome}}}
+	facade := &core.CoreMock{UpdatePasswordResponseArray: []*core.ErrorResponse{{Err: errSome}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -264,7 +264,7 @@ func TestUpdatePassword_UpdatePassword_ErrUnauthorized(t *testing.T) {
 // Delete User Test
 
 func TestDeleteUser_Successfully(t *testing.T) {
-	facade := &core.CoreMock{DeleteUserResponseArray: []*core.ErrorResponse{{nil}}}
+	facade := &core.CoreMock{DeleteUserResponseArray: []*core.ErrorResponse{{Err: nil}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -291,7 +291,7 @@ func TestDeleteUser_Successfully(t *testing.T) {
 }
 
 func TestDeleteUser_DeleteUser_ErrUnauthorized(t *testing.T) {
-	facade := &core.CoreMock{DeleteUserResponseArray: []*core.ErrorResponse{{errSome}}}
+	facade := &core.CoreMock{DeleteUserResponseArray: []*core.ErrorResponse{{Err: errSome}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
