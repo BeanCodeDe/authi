@@ -8,7 +8,7 @@ import (
 )
 
 func TestCheckToken_Successfully(t *testing.T) {
-	tokenParserMock := &parser.ParserMock{parseTokenResponseArray: []*parser.ParseTokenResponse{{claim: &adapter.Claims{}, err: nil}}}
+	tokenParserMock := &parser.ParserMock{ParseTokenResponseArray: []*parser.ParseTokenResponse{{Claim: &adapter.Claims{}, Err: nil}}}
 	middleware := &EchoMiddleware{tokenParser: tokenParserMock}
 
 	middleware.CheckToken(nil)

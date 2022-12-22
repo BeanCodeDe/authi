@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 // CreateUserId Tests
 
 func TestCreateUserId_Successfully(t *testing.T) {
-	userApi := &UserApi{&facadeMock{}}
+	userApi := &UserApi{&core.CoreMock{}}
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, adapter.AuthiRootPath, nil)
@@ -31,7 +32,7 @@ func TestCreateUserId_Successfully(t *testing.T) {
 // CreateUser Tests
 
 func TestCreateUser_Successfully(t *testing.T) {
-	facade := &facadeMock{createUserReturn: []error{nil}}
+	facade := &core.CoreMock{CreateUserResponseArray: []*core.ErrorResponse{{nil}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -48,18 +49,18 @@ func TestCreateUser_Successfully(t *testing.T) {
 	// Assertions
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 1, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.createUserRecordArray[0].userId)
-	assert.Equal(t, password, facade.createUserRecordArray[0].authenticate.Password)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 1, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.CreateUserRecordArray[0].UserId)
+	assert.Equal(t, password, facade.CreateUserRecordArray[0].Authenticate.Password)
 
 }
 
 func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
-	facade := &facadeMock{createUserReturn: []error{errSome}}
+	facade := &core.CoreMock{CreateUserResponseArray: []*core.ErrorResponse{{errSome}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -75,19 +76,19 @@ func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 	err := userApi.CreateUser(c)
 	// Assertions
 	assert.Equal(t, echo.ErrUnauthorized, err)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 1, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.createUserRecordArray[0].userId)
-	assert.Equal(t, password, facade.createUserRecordArray[0].authenticate.Password)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 1, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.CreateUserRecordArray[0].UserId)
+	assert.Equal(t, password, facade.CreateUserRecordArray[0].Authenticate.Password)
 }
 
 // LoginUser Tests
 
 func TestLoginUser_Successfully(t *testing.T) {
-	facade := &facadeMock{loginUserReturn: successfullyTokenResponse}
+	facade := &core.CoreMock{LoginUserResponseArray: successfullyTokenResponse}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -105,19 +106,19 @@ func TestLoginUser_Successfully(t *testing.T) {
 	// Assertions
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 1, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.loginUserRecordArray[0].userId)
-	assert.Equal(t, password, facade.loginUserRecordArray[0].authenticate.Password)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 1, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.LoginUserRecordArray[0].UserId)
+	assert.Equal(t, password, facade.LoginUserRecordArray[0].Authenticate.Password)
 	assert.Equal(t, "{\"access_token\":\"some_access_token\",\"expires_in\":1,\"refresh_token\":\"some_refresh_token\",\"refresh_expires_in\":2}\n", rec.Body.String())
 
 }
 
 func TestLoginUser__LoginUser_ErrUnauthorized(t *testing.T) {
-	facade := &facadeMock{loginUserReturn: errorTokenResponse}
+	facade := &core.CoreMock{LoginUserResponseArray: errorTokenResponse}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -134,20 +135,20 @@ func TestLoginUser__LoginUser_ErrUnauthorized(t *testing.T) {
 	err := userApi.LoginUser(c)
 	// Assertions
 	assert.Equal(t, echo.ErrUnauthorized, err)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 1, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.loginUserRecordArray[0].userId)
-	assert.Equal(t, password, facade.loginUserRecordArray[0].authenticate.Password)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 1, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.LoginUserRecordArray[0].UserId)
+	assert.Equal(t, password, facade.LoginUserRecordArray[0].Authenticate.Password)
 
 }
 
 // RefreshToken Tests
 
 func TestRefreshToken_Successfully(t *testing.T) {
-	facade := &facadeMock{refreshTokenReturn: successfullyTokenResponse}
+	facade := &core.CoreMock{RefreshTokenResponseArray: successfullyTokenResponse}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -165,18 +166,18 @@ func TestRefreshToken_Successfully(t *testing.T) {
 	// Assertions
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, 1, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.refreshTokenRecordArray[0].userId)
-	assert.Equal(t, refreshToken, facade.refreshTokenRecordArray[0].token)
+	assert.Equal(t, 1, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.RefreshTokenRecordArray[0].UserId)
+	assert.Equal(t, refreshToken, facade.RefreshTokenRecordArray[0].RefreshToken)
 
 }
 
 func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
-	facade := &facadeMock{refreshTokenReturn: errorTokenResponse}
+	facade := &core.CoreMock{RefreshTokenResponseArray: errorTokenResponse}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -193,19 +194,19 @@ func TestRefreshToken_RefreshToken_ErrUnauthorized(t *testing.T) {
 	err := userApi.RefreshToken(c)
 	// Assertions
 	assert.Equal(t, echo.ErrUnauthorized, err)
-	assert.Equal(t, 1, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.refreshTokenRecordArray[0].userId)
-	assert.Equal(t, refreshToken, facade.refreshTokenRecordArray[0].token)
+	assert.Equal(t, 1, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.RefreshTokenRecordArray[0].UserId)
+	assert.Equal(t, refreshToken, facade.RefreshTokenRecordArray[0].RefreshToken)
 }
 
 // Update Password Test
 
 func TestUpdatePassword_Successfully(t *testing.T) {
-	facade := &facadeMock{updatePasswordReturn: []error{nil}}
+	facade := &core.CoreMock{UpdatePasswordResponseArray: []*core.ErrorResponse{{nil}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -223,18 +224,18 @@ func TestUpdatePassword_Successfully(t *testing.T) {
 	// Assertions
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 1, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.updatePasswordRecordArray[0].userId)
-	assert.Equal(t, password, facade.updatePasswordRecordArray[0].authenticate.Password)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 1, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.UpdatePasswordRecordArray[0].UserId)
+	assert.Equal(t, password, facade.UpdatePasswordRecordArray[0].Authenticate.Password)
 
 }
 
 func TestUpdatePassword_UpdatePassword_ErrUnauthorized(t *testing.T) {
-	facade := &facadeMock{updatePasswordReturn: []error{errSome}}
+	facade := &core.CoreMock{UpdatePasswordResponseArray: []*core.ErrorResponse{{errSome}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -251,19 +252,19 @@ func TestUpdatePassword_UpdatePassword_ErrUnauthorized(t *testing.T) {
 	err := userApi.UpdatePassword(c)
 	// Assertions
 	assert.Equal(t, echo.ErrUnauthorized, err)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 1, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.updatePasswordRecordArray[0].userId)
-	assert.Equal(t, password, facade.updatePasswordRecordArray[0].authenticate.Password)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 1, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.UpdatePasswordRecordArray[0].UserId)
+	assert.Equal(t, password, facade.UpdatePasswordRecordArray[0].Authenticate.Password)
 }
 
 // Delete User Test
 
 func TestDeleteUser_Successfully(t *testing.T) {
-	facade := &facadeMock{deleteUserReturn: []error{nil}}
+	facade := &core.CoreMock{DeleteUserResponseArray: []*core.ErrorResponse{{nil}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -281,16 +282,16 @@ func TestDeleteUser_Successfully(t *testing.T) {
 	// Assertions
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 1, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.deleteUserRecordArray[0].userId)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 1, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.DeleteUserRecordArray[0].UserId)
 }
 
 func TestDeleteUser_DeleteUser_ErrUnauthorized(t *testing.T) {
-	facade := &facadeMock{deleteUserReturn: []error{errSome}}
+	facade := &core.CoreMock{DeleteUserResponseArray: []*core.ErrorResponse{{errSome}}}
 	userApi := &UserApi{facade}
 	// Setup
 	e := echo.New()
@@ -307,10 +308,10 @@ func TestDeleteUser_DeleteUser_ErrUnauthorized(t *testing.T) {
 	err := userApi.DeleteUser(c)
 	// Assertions
 	assert.Equal(t, echo.ErrUnauthorized, err)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 0, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 1, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.deleteUserRecordArray[0].userId)
+	assert.Equal(t, 0, len(facade.RefreshTokenRecordArray))
+	assert.Equal(t, 0, len(facade.LoginUserRecordArray))
+	assert.Equal(t, 0, len(facade.CreateUserRecordArray))
+	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
+	assert.Equal(t, 1, len(facade.DeleteUserRecordArray))
+	assert.Equal(t, userId, facade.DeleteUserRecordArray[0].UserId)
 }
