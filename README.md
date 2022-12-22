@@ -182,7 +182,7 @@ func MiddlewareExample() {
 	}
 
 	//Initialize middleware
-	echoMiddleware := echoMiddleware.NewEchoMiddleware(tokenParser)
+	echoMiddleware := middleware.NewEchoMiddleware(tokenParser)
 
 	//Initialize echo
 	e := echo.New()
