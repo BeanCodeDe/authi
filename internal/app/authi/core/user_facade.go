@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/db"
-	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
@@ -75,8 +74,11 @@ func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *adapter
 	dbUser := &db.UserDB{ID: userId, Password: authenticate.Password, CreatedOn: creationTime, LastLogin: creationTime}
 
 	if err := userFacade.dbConnection.CreateUser(dbUser, randomString()); err != nil {
-		if errors.Is(err, errormessages.ErrUserAlreadyExists) {
-			return err
+		if errors.Is(err, db.ErrUserAlreadyExists) {
+			if err := userFacade.dbConnection.LoginUser(dbUser); err != nil {
+				return fmt.Errorf("something went wrong while checking credentials of already created user, %v: %w", userId, err)
+			}
+			return nil
 		}
 		return fmt.Errorf("error while creating user: %v", err)
 	}

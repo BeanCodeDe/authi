@@ -1,12 +1,10 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
-	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	echoMiddleware "github.com/BeanCodeDe/authi/pkg/middleware"
@@ -34,29 +32,6 @@ type (
 
 func (cv *CustomValidator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
-}
-
-func MiddlewareExample() {
-	//Initialize parser to validate Tokens
-	tokenParser, err := parser.NewJWTParser()
-
-	//Checking if an error occurred while loading jwt parser
-	if err != nil {
-		panic(err)
-	}
-
-	//Initialize middleware
-	echoMiddleware := echoMiddleware.NewEchoMiddleware(tokenParser)
-
-	//Initialize echo
-	e := echo.New()
-
-	//Secure endpoint with method `echoMiddleware.CheckToken`
-	e.GET(
-		"/someEndpoint",
-		func(c echo.Context) error { return c.NoContent(201) },
-		echoMiddleware.CheckToken,
-	)
 }
 
 func NewUserApi(parser parser.Parser) (*UserApi, error) {
@@ -104,12 +79,8 @@ func (userApi *UserApi) CreateUser(context echo.Context) error {
 	}
 
 	if err := userApi.facade.CreateUser(userId, authenticate); err != nil {
-		if errors.Is(err, errormessages.ErrUserAlreadyExists) {
-			log.Warnf("User with id %s already exists", userId)
-			return echo.NewHTTPError(http.StatusConflict)
-		}
 		log.Warnf("Error while creating user: %v", err)
-		return echo.ErrInternalServerError
+		return echo.ErrUnauthorized
 	}
 
 	log.Debugf("Created user with id %s", userId)

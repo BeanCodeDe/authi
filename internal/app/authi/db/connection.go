@@ -27,6 +27,10 @@ type (
 	}
 )
 
+var (
+	ErrUserAlreadyExists = errors.New("user already exists")
+)
+
 func NewConnection() (Connection, error) {
 	switch db := strings.ToLower(util.GetEnvWithFallback("DATABASE", "postgresql")); db {
 	case "postgresql":

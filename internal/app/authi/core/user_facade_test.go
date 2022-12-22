@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
+	"github.com/BeanCodeDe/authi/internal/app/authi/db"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,22 +49,48 @@ func TestCreateUser_CreateUser_UnknownError(t *testing.T) {
 	assert.Len(t, dbConnection.createUserRecordArray[0].hash, 32)
 }
 
-func TestCreateUser_CreateUser_AlreadyExists(t *testing.T) {
-	dbConnection := &ConnectionMock{createUserReturn: errormessages.ErrUserAlreadyExists}
+func TestCreateUser_CreateUser_AlreadyExistsWrongPassword(t *testing.T) {
+	dbConnection := &ConnectionMock{createUserReturn: db.ErrUserAlreadyExists, loginUserReturn: errUnknown}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	err := userFacade.CreateUser(userId, authenticate)
-	assert.Equal(t, errormessages.ErrUserAlreadyExists, err)
+	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(dbConnection.closeRecordArray))
 	assert.Equal(t, 1, len(dbConnection.createUserRecordArray))
 	assert.Equal(t, 0, len(dbConnection.updateRefreshTokenRecordArray))
-	assert.Equal(t, 0, len(dbConnection.loginUserRecordArray))
+	assert.Equal(t, 1, len(dbConnection.loginUserRecordArray))
 	assert.Equal(t, 0, len(dbConnection.checkRefreshTokenRecordArray))
 	assert.Equal(t, 0, len(dbConnection.updatePasswordRecordArray))
 	assert.Equal(t, 0, len(dbConnection.deleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.createUserRecordArray[0].user.ID)
+	assert.Equal(t, password, dbConnection.createUserRecordArray[0].user.Password)
 	assert.Len(t, dbConnection.createUserRecordArray[0].hash, 32)
+
+	assert.Equal(t, userId, dbConnection.loginUserRecordArray[0].user.ID)
+	assert.Equal(t, password, dbConnection.loginUserRecordArray[0].user.Password)
+}
+
+func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
+	dbConnection := &ConnectionMock{createUserReturn: db.ErrUserAlreadyExists}
+	userFacade := &UserFacade{dbConnection: dbConnection}
+
+	err := userFacade.CreateUser(userId, authenticate)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(dbConnection.closeRecordArray))
+	assert.Equal(t, 1, len(dbConnection.createUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.updateRefreshTokenRecordArray))
+	assert.Equal(t, 1, len(dbConnection.loginUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.checkRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.updatePasswordRecordArray))
+	assert.Equal(t, 0, len(dbConnection.deleteUserRecordArray))
+
+	assert.Equal(t, userId, dbConnection.createUserRecordArray[0].user.ID)
+	assert.Equal(t, password, dbConnection.createUserRecordArray[0].user.Password)
+	assert.Len(t, dbConnection.createUserRecordArray[0].hash, 32)
+
+	assert.Equal(t, userId, dbConnection.loginUserRecordArray[0].user.ID)
+	assert.Equal(t, password, dbConnection.loginUserRecordArray[0].user.Password)
 }
 
 // RefreshToken Test

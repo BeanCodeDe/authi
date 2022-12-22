@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -59,33 +58,6 @@ func TestCreateUser_Successfully(t *testing.T) {
 
 }
 
-func TestCreateUser_CreateUser_ErrUserAlreadyExists(t *testing.T) {
-	facade := &facadeMock{createUserReturn: []error{errormessages.ErrUserAlreadyExists}}
-	userApi := &UserApi{facade}
-	// Setup
-	e := echo.New()
-	e.Validator = &CustomValidator{validator: validator.New()}
-	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
-	c.SetParamNames(userIdParam)
-	c.SetParamValues(userId.String())
-	// Exec
-	err := userApi.CreateUser(c)
-	// Assertions
-	assert.Equal(t, echo.NewHTTPError(http.StatusConflict), err)
-	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
-	assert.Equal(t, 0, len(facade.loginUserRecordArray))
-	assert.Equal(t, 1, len(facade.createUserRecordArray))
-	assert.Equal(t, 0, len(facade.updatePasswordRecordArray))
-	assert.Equal(t, 0, len(facade.deleteUserRecordArray))
-	assert.Equal(t, userId, facade.createUserRecordArray[0].userId)
-	assert.Equal(t, password, facade.createUserRecordArray[0].authenticate.Password)
-
-}
-
 func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 	facade := &facadeMock{createUserReturn: []error{errSome}}
 	userApi := &UserApi{facade}
@@ -102,7 +74,7 @@ func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 	// Exec
 	err := userApi.CreateUser(c)
 	// Assertions
-	assert.Equal(t, echo.ErrInternalServerError, err)
+	assert.Equal(t, echo.ErrUnauthorized, err)
 	assert.Equal(t, 0, len(facade.refreshTokenRecordArray))
 	assert.Equal(t, 0, len(facade.loginUserRecordArray))
 	assert.Equal(t, 1, len(facade.createUserRecordArray))

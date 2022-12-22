@@ -63,7 +63,8 @@ type (
 var (
 	userId         = uuid.New()
 	refreshToken   = "someRefreshToken"
-	authenticate   = &adapter.AuthenticateDTO{}
+	password       = "some password"
+	authenticate   = &adapter.AuthenticateDTO{Password: password}
 	privateKeyPath = "../../../../deployments/token/jwtRS256.key"
 	errUnknown     = errors.New("some error")
 )

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/golang-migrate/migrate/v4"
@@ -89,7 +88,7 @@ func (connection *PostgresConnection) CreateUser(user *UserDB, hash string) erro
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case pgerrcode.UniqueViolation:
-				return errormessages.ErrUserAlreadyExists
+				return ErrUserAlreadyExists
 			}
 		}
 
