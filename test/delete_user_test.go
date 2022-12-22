@@ -53,3 +53,13 @@ func TestDeleteUser_ExpiredToken(t *testing.T) {
 	status := util.DeleteUser(userId, customToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
+
+func TestDeleteUser_Retry_LoginUnable(t *testing.T) {
+	token, userId := util.ObtainToken(t)
+	status := util.DeleteUser(userId, token.AccessToken)
+	assert.Equal(t, status, http.StatusNoContent)
+	status = util.DeleteUser(userId, token.AccessToken)
+	assert.Equal(t, status, http.StatusNoContent)
+	_, status = util.Login(userId, util.DefaultPassword)
+	assert.Equal(t, status, http.StatusUnauthorized)
+}
