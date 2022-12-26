@@ -36,5 +36,5 @@ func TestCreateUserRetry(t *testing.T) {
 	assert.Equal(t, status, http.StatusCreated)
 
 	status = util.CreateUser(userId, "random_password")
-	assert.Equal(t, status, http.StatusConflict)
+	assert.Equal(t, status, http.StatusCreated)
 }

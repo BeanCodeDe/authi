@@ -34,7 +34,7 @@ func TestDeleteUser_WrongFormatAccessToken(t *testing.T) {
 
 func TestDeleteUser_WrongUserIdToken(t *testing.T) {
 	userId := util.CreateUserForFurtherTesting(t)
-	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
+	signKey := util.LoadPrivateKeyFile(util.PrivateKeyFile)
 	customToken := util.CreateCustomJWTToken(uuid.NewString(), time.Now().Add(30*time.Minute).Unix(), signKey)
 	status := util.DeleteUser(userId, customToken)
 	assert.Equal(t, status, http.StatusUnauthorized)
@@ -48,8 +48,18 @@ func TestDeleteUser_WrongUserIdPath(t *testing.T) {
 
 func TestDeleteUser_ExpiredToken(t *testing.T) {
 	userId := util.CreateUserForFurtherTesting(t)
-	signKey := util.LoadPrivatKeyFile(util.PrivatKeyFile)
+	signKey := util.LoadPrivateKeyFile(util.PrivateKeyFile)
 	customToken := util.CreateCustomJWTToken(userId, time.Now().Add(-1*time.Second).Unix(), signKey)
 	status := util.DeleteUser(userId, customToken)
+	assert.Equal(t, status, http.StatusUnauthorized)
+}
+
+func TestDeleteUser_Retry_LoginUnable(t *testing.T) {
+	token, userId := util.ObtainToken(t)
+	status := util.DeleteUser(userId, token.AccessToken)
+	assert.Equal(t, status, http.StatusNoContent)
+	status = util.DeleteUser(userId, token.AccessToken)
+	assert.Equal(t, status, http.StatusNoContent)
+	_, status = util.Login(userId, util.DefaultPassword)
 	assert.Equal(t, status, http.StatusUnauthorized)
 }

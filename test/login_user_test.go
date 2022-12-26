@@ -19,3 +19,11 @@ func TestLoginFailed(t *testing.T) {
 	_, status := util.Login(userId, "wrongPassword")
 	assert.Equal(t, status, http.StatusUnauthorized)
 }
+
+func TestLogin_Retry(t *testing.T) {
+	userId := util.CreateUserForFurtherTesting(t)
+	_, status := util.Login(userId, util.DefaultPassword)
+	assert.Equal(t, status, http.StatusOK)
+	_, status = util.Login(userId, util.DefaultPassword)
+	assert.Equal(t, status, http.StatusOK)
+}

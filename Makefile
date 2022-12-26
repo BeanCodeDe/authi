@@ -15,6 +15,7 @@ app.build:
 
 app.ut.run:
 	go test ./internal/... -v
+	go test ./pkg/... -v
 
 app.jt.run:
 	docker compose --file $(DOCKER_COMPOSE_PATH) up --build --force-recreate -d

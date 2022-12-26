@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BeanCodeDe/authi/internal/app/authi/errormessages"
 	"github.com/BeanCodeDe/authi/internal/app/authi/util"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/golang-migrate/migrate/v4"
@@ -27,7 +26,7 @@ var (
 )
 
 type (
-	PostgresConnection struct {
+	postgresConnection struct {
 		dbPool *pgxpool.Pool
 	}
 )
@@ -57,10 +56,10 @@ func newPostgresConnection() (Connection, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %v", err)
 	}
-	return &PostgresConnection{dbPool: dbPool}, nil
+	return &postgresConnection{dbPool: dbPool}, nil
 }
 
-func (connection *PostgresConnection) Close() {
+func (connection *postgresConnection) Close() {
 	connection.dbPool.Close()
 }
 
@@ -83,13 +82,13 @@ func migratePostgresDatabase(url string) error {
 	return nil
 }
 
-func (connection *PostgresConnection) CreateUser(user *UserDB, hash string) error {
+func (connection *postgresConnection) CreateUser(user *UserDB, hash string) error {
 	if _, err := connection.dbPool.Exec(context.Background(), "INSERT INTO auth.user(id, password,salt,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case pgerrcode.UniqueViolation:
-				return errormessages.ErrUserAlreadyExists
+				return ErrUserAlreadyExists
 			}
 		}
 
@@ -98,14 +97,14 @@ func (connection *PostgresConnection) CreateUser(user *UserDB, hash string) erro
 	return nil
 }
 
-func (connection *PostgresConnection) UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
+func (connection *postgresConnection) UpdateRefreshToken(userId uuid.UUID, refreshToken string, refreshTokenExpireAt time.Time) error {
 	if _, err := connection.dbPool.Exec(context.Background(), "UPDATE auth.user SET refresh_token=$1, refresh_token_expire=$2 WHERE id=$3", refreshToken, refreshTokenExpireAt, userId); err != nil {
 		return fmt.Errorf("unknown error when updating refresh token of user %s error: %v", userId, err)
 	}
 	return nil
 }
 
-func (connection *PostgresConnection) LoginUser(user *UserDB) error {
+func (connection *postgresConnection) LoginUser(user *UserDB) error {
 
 	var users []*UserDB
 	if err := pgxscan.Select(context.Background(), connection.dbPool, &users, `SELECT id,created_on,last_login FROM auth.user WHERE id = $1 AND password = MD5(CONCAT($2::text,(SELECT salt FROM auth.user WHERE id = $1)::text))`, user.ID, user.Password); err != nil {
@@ -133,7 +132,7 @@ func (connection *PostgresConnection) LoginUser(user *UserDB) error {
 	return nil
 }
 
-func (connection *PostgresConnection) CheckRefreshToken(userId uuid.UUID, refreshToken string) error {
+func (connection *postgresConnection) CheckRefreshToken(userId uuid.UUID, refreshToken string) error {
 
 	var users []*UserDB
 	if err := pgxscan.Select(context.Background(), connection.dbPool, &users, `SELECT id FROM auth.user WHERE id = $1 AND refresh_token = $2 AND refresh_token_expire > now()`, userId, refreshToken); err != nil {
@@ -158,14 +157,14 @@ func (connection *PostgresConnection) CheckRefreshToken(userId uuid.UUID, refres
 	return nil
 }
 
-func (connection *PostgresConnection) UpdatePassword(userId uuid.UUID, password string, hash string) error {
+func (connection *postgresConnection) UpdatePassword(userId uuid.UUID, password string, hash string) error {
 	if _, err := connection.dbPool.Exec(context.Background(), "UPDATE auth.user SET password=MD5($1), salt=$2 WHERE id=$3", password+hash, hash, userId); err != nil {
 		return fmt.Errorf("unknown error when updating password of user %s error: %v", userId, err)
 	}
 	return nil
 }
 
-func (connection *PostgresConnection) DeleteUser(userId uuid.UUID) error {
+func (connection *postgresConnection) DeleteUser(userId uuid.UUID) error {
 	if _, err := connection.dbPool.Exec(context.Background(), "DELETE FROM auth.user WHERE id=$1", userId); err != nil {
 		return fmt.Errorf("unknown error when deleting user %s error: %v", userId, err)
 	}

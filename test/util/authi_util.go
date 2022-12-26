@@ -10,14 +10,15 @@ import (
 
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"gopkg.in/go-playground/assert.v1"
 )
 
 const (
-	PublicKeyFile      = "./data/token/public/jwtRS256.key.pub"
-	PrivatKeyFile      = "./data/token/privat/jwtRS256.key"
-	WrongPublicKeyFile = "./data/token/public/jwtRS256_wrong.key.pub"
-	WrongPrivatKeyFile = "./data/token/privat/jwtRS256_wrong.key"
+	PublicKeyFile       = "./data/token/public/jwtRS256.key.pub"
+	PrivateKeyFile      = "./data/token/privat/jwtRS256.key"
+	WrongPublicKeyFile  = "./data/token/public/jwtRS256_wrong.key.pub"
+	WrongPrivateKeyFile = "./data/token/privat/jwtRS256_wrong.key"
 )
 
 type Claims struct {
@@ -36,6 +37,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 		panic(err)
 	}
 	req.Header.Set("Content-Type", adapter.ContentTyp)
+	req.Header.Set(CorrelationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -53,6 +55,7 @@ func sendRefreshTokenRequest(userId string, token string, refreshToken string) *
 	}
 	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
 	req.Header.Set(adapter.RefreshTokenHeaderName, refreshToken)
+	req.Header.Set(CorrelationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -113,7 +116,7 @@ func CreateCustomJWTToken(userId string, expirationTime int64, signKey *rsa.Priv
 	return signedToken
 }
 
-func LoadPrivatKeyFile(fileName string) *rsa.PrivateKey {
+func LoadPrivateKeyFile(fileName string) *rsa.PrivateKey {
 	verifyBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err)

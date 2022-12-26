@@ -1,4 +1,3 @@
-// Package to request and verify jwt token
 package adapter
 
 import (
@@ -76,35 +75,20 @@ func (authAdapter *AuthiAdapter) RefreshToken(userId string, token string, refre
 func (authAdapter *AuthiAdapter) GetToken(userId string, password string) (*TokenResponseDTO, error) {
 	authenticateJson, err := json.Marshal(&AuthenticateDTO{Password: password})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(authAdapter.authiLoginUrl, userId), bytes.NewBuffer(authenticateJson))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", ContentTyp)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return readTokenResponse(resp)
-}
-
-// Method to handle response with token
-func readTokenResponse(resp *http.Response) (*TokenResponseDTO, error) {
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w but: %v", errStatusNotOk, resp.StatusCode)
-	}
-
-	tokenResponse := new(TokenResponseDTO)
-	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
-		return nil, fmt.Errorf("%w: %v", errReadResponse, err)
-	}
-	return tokenResponse, nil
 }
