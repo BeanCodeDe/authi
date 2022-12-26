@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -27,7 +29,8 @@ const (
 	AuthiRefreshPath = "/refresh"
 
 	//Content type for AuthenticateDTO
-	ContentTyp = "application/json; charset=utf-8"
+	ContentTyp    = "application/json; charset=utf-8"
+	correlationId = "X-Correlation-ID"
 )
 
 var (
@@ -41,15 +44,16 @@ var (
 type AuthiAdapter struct {
 	authiRefreshUrl string
 	authiLoginUrl   string
+	correlationId   string
 }
 
 // Initialize auth adapter with public key and url to authi service.
 // Therefor the environment variable AUTH_URL have to be set
-func NewAuthiAdapter() AuthAdapter {
+func NewAuthiAdapter(correlationId string) AuthAdapter {
 	authUrl := os.Getenv(EnvAuthUrl)
 	authiRefreshUrl := authUrl + AuthiRootPath + "/%s" + AuthiRefreshPath
-	authiLoginhUrl := authUrl + AuthiRootPath + "/%s" + AuthiLoginPath
-	return &AuthiAdapter{authiRefreshUrl: authiRefreshUrl, authiLoginUrl: authiLoginhUrl}
+	authiLoginUrl := authUrl + AuthiRootPath + "/%s" + AuthiLoginPath
+	return &AuthiAdapter{authiRefreshUrl: authiRefreshUrl, authiLoginUrl: authiLoginUrl, correlationId: correlationId}
 }
 
 // Get new token with refresh token from authi service
@@ -63,6 +67,7 @@ func (authAdapter *AuthiAdapter) RefreshToken(userId string, token string, refre
 
 	req.Header.Set(AuthorizationHeaderName, "Bearer "+token)
 	req.Header.Set(RefreshTokenHeaderName, refreshToken)
+	req.Header.Set(correlationId, uuid.NewString())
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -83,6 +88,7 @@ func (authAdapter *AuthiAdapter) GetToken(userId string, password string) (*Toke
 		return nil, err
 	}
 	req.Header.Set("Content-Type", ContentTyp)
+	req.Header.Set(correlationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

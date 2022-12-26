@@ -16,6 +16,10 @@ type (
 	}
 )
 
+const (
+	CorrelationIdHeader = "X-Correlation-ID"
+)
+
 func bindAuthenticate(context echo.Context) (uuid.UUID, *adapter.AuthenticateDTO, error) {
 	logger := context.Get(loggerKey).(*log.Entry)
 	authenticate := new(adapter.AuthenticateDTO)
