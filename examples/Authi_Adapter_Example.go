@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/BeanCodeDe/authi/pkg/adapter"
+	"github.com/google/uuid"
 )
 
 func AdapterExample() {
@@ -11,8 +12,11 @@ func AdapterExample() {
 	//User id that were previously created over REST
 	userId := "693227c8-4178-4e72-b3b7-a8b8bae36f1b"
 
+	//Generate UUID to trace your calls in the logs
+	correlationId := uuid.NewString()
+
 	//Initialize authi adapter
-	authiAdapter := adapter.NewAuthiAdapter()
+	authiAdapter := adapter.NewAuthiAdapter(correlationId)
 
 	//Logging in previously created user with password `mySecretUserPassword`
 	token, err := authiAdapter.GetToken(userId, "mySecretUserPassword")
