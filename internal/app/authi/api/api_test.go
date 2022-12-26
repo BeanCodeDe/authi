@@ -12,6 +12,7 @@ import (
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/go-playground/validator.v9"
 )
@@ -40,6 +41,7 @@ func TestBindAuthenticate_Successfully(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := e.NewContext(req, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
@@ -60,6 +62,7 @@ func TestBindAuthenticate_CouldNotBind(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationXML)
 	c := e.NewContext(req, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
@@ -80,6 +83,7 @@ func TestBindAuthenticate_ValidateError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserInvalidJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := e.NewContext(req, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(userId.String())
@@ -100,6 +104,7 @@ func TestBindAuthenticate_ParseError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, adapter.AuthiRootPath, strings.NewReader(authenticationUserJson))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c := e.NewContext(req, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.SetPath(adapter.AuthiRootPath + "/:" + userIdParam)
 	c.SetParamNames(userIdParam)
 	c.SetParamValues(wrongUUID)
@@ -119,6 +124,7 @@ func TestCheckUserId_Successfully(t *testing.T) {
 	// Prep
 	e := echo.New()
 	c := e.NewContext(nil, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.Set(adapter.ClaimName, claimUser)
 
 	// Exec
@@ -132,6 +138,7 @@ func TestCheckUserId_CouldNotMapClaim(t *testing.T) {
 	// Prep
 	e := echo.New()
 	c := e.NewContext(nil, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.Set(adapter.ClaimName, wrongClaimFormat)
 
 	// Exec
@@ -145,6 +152,7 @@ func TestCheckUserId_ClaimDoesNotMatchUserId(t *testing.T) {
 	// Prep
 	e := echo.New()
 	c := e.NewContext(nil, nil)
+	c.Set(loggerKey, log.WithField("Test", t.Name()))
 	c.Set(adapter.ClaimName, claimUser)
 
 	// Exec
