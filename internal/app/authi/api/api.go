@@ -18,13 +18,11 @@ type (
 
 func bindAuthenticate(context echo.Context) (uuid.UUID, *adapter.AuthenticateDTO, error) {
 	logger := context.Get(loggerKey).(*log.Entry)
-	logger.Debugf("Bind context to auth %v", context)
 	authenticate := new(adapter.AuthenticateDTO)
 	if err := context.Bind(authenticate); err != nil {
 		logger.Warnf("Could not bind auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
-	logger.Debugf("Auth bind %v", authenticate)
 	if err := context.Validate(authenticate); err != nil {
 		logger.Warnf("Could not validate auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
