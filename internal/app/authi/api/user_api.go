@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/BeanCodeDe/authi/internal/app/authi/core"
 	"github.com/BeanCodeDe/authi/internal/app/authi/util"
@@ -13,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/acme/autocert"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -49,7 +51,28 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 	api := &UserApi{userFacade}
 
 	e := echo.New()
-	e.Use(middleware.CORS(), setLoggerMiddleware)
+	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
+	e.Use(middleware.CORS(), setLoggerMiddleware, middleware.Recover())
+
+	config := middleware.RateLimiterConfig{
+		Skipper: middleware.DefaultSkipper,
+		Store: middleware.NewRateLimiterMemoryStoreWithConfig(
+			middleware.RateLimiterMemoryStoreConfig{Rate: 10, Burst: 30, ExpiresIn: 3 * time.Minute},
+		),
+		IdentifierExtractor: func(ctx echo.Context) (string, error) {
+			id := ctx.RealIP()
+			return id, nil
+		},
+		ErrorHandler: func(context echo.Context, err error) error {
+			return context.JSON(http.StatusForbidden, nil)
+		},
+		DenyHandler: func(context echo.Context, identifier string, err error) error {
+			return context.JSON(http.StatusTooManyRequests, nil)
+		},
+	}
+
+	e.Use(middleware.RateLimiterWithConfig(config))
+
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	userGroup := e.Group(adapter.AuthiRootPath)
@@ -66,7 +89,7 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 		return nil, fmt.Errorf("error while loading port from environment variable: %w", err)
 	}
 	url := fmt.Sprintf("%s:%d", address, port)
-	e.Logger.Fatal(e.Start(url))
+	e.Logger.Fatal(e.StartAutoTLS(url))
 
 	return api, nil
 }
