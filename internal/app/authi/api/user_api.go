@@ -57,11 +57,14 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 	config := middleware.RateLimiterConfig{
 		Skipper: middleware.DefaultSkipper,
 		Store: middleware.NewRateLimiterMemoryStoreWithConfig(
-			middleware.RateLimiterMemoryStoreConfig{Rate: 10, Burst: 30, ExpiresIn: 3 * time.Minute},
+			middleware.RateLimiterMemoryStoreConfig{Rate: 10, Burst: 30, ExpiresIn: 1 * time.Minute},
 		),
 		IdentifierExtractor: func(ctx echo.Context) (string, error) {
-			id := ctx.RealIP()
-			return id, nil
+			userId := ctx.Param(userIdParam)
+			if userId != "" {
+				return userId, nil
+			}
+			return ctx.RealIP(), nil
 		},
 		ErrorHandler: func(context echo.Context, err error) error {
 			return context.JSON(http.StatusForbidden, nil)
@@ -89,7 +92,7 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 		return nil, fmt.Errorf("error while loading port from environment variable: %w", err)
 	}
 	url := fmt.Sprintf("%s:%d", address, port)
-	e.Logger.Fatal(e.StartAutoTLS(url))
+	e.Logger.Fatal(e.Start(url))
 
 	return api, nil
 }
