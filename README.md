@@ -1,7 +1,7 @@
 # Authi
 A lightweight authentication service written in go
 
-![Build](https://img.shields.io/github/workflow/status/BeanCodeDe/authi/Audit_And_Deploy.svg)
+![Build](https://img.shields.io/github/actions/workflow/status/BeanCodeDe/authi/push_pipeline.yml)
 ![License](https://img.shields.io/github/license/BeanCodeDe/authi.svg)
 ![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)
 ![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/BeanCodeDe/authi.svg)
@@ -133,8 +133,11 @@ func AdapterExample() {
 	//User id that were previously created over REST
 	userId := "693227c8-4178-4e72-b3b7-a8b8bae36f1b"
 
+	//Generate UUID to trace your calls in the logs
+	correlationId := uuid.NewString()
+
 	//Initialize authi adapter
-	authiAdapter := adapter.NewAuthiAdapter()
+	authiAdapter := adapter.NewAuthiAdapter(correlationId)
 
 	//Logging in previously created user with password `mySecretUserPassword`
 	token, err := authiAdapter.GetToken(userId, "mySecretUserPassword")

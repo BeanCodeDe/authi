@@ -23,8 +23,7 @@ var (
 )
 
 const (
-	correlationIdHeader = "X-Correlation-ID"
-	loggerKey           = "logger"
+	loggerKey = "logger"
 )
 
 type (
@@ -213,10 +212,14 @@ func (userApi *UserApi) DeleteUser(context echo.Context) error {
 
 func setLoggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		correlationId := c.Request().Header.Get(correlationIdHeader)
-
+		correlationId := c.Request().Header.Get(CorrelationIdHeader)
+		_, err := uuid.Parse(correlationId)
+		if err != nil {
+			log.Warn("Correlation id is not from format uuid. Set default correlation id.")
+			correlationId = "WRONG FORMAT"
+		}
 		logger := log.WithFields(log.Fields{
-			correlationIdHeader: correlationId,
+			CorrelationIdHeader: correlationId,
 		})
 
 		c.Set(loggerKey, logger)

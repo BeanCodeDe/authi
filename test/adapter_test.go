@@ -6,13 +6,14 @@ import (
 
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/BeanCodeDe/authi/test/util"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAdapterRefreshToken(t *testing.T) {
 	t.Setenv(adapter.EnvAuthUrl, util.Url)
 	token, userId := util.ObtainToken(t)
-	authi := adapter.NewAuthiAdapter()
+	authi := adapter.NewAuthiAdapter(uuid.NewString())
 	refreshedToken, err := authi.RefreshToken(userId, token.AccessToken, token.RefreshToken)
 
 	assert.Nil(t, err)
@@ -25,7 +26,7 @@ func TestAdapterRefreshToken(t *testing.T) {
 func TestAdapterLogin(t *testing.T) {
 	t.Setenv(adapter.EnvAuthUrl, util.Url)
 	userId := util.CreateUserForFurtherTesting(t)
-	authi := adapter.NewAuthiAdapter()
+	authi := adapter.NewAuthiAdapter(uuid.NewString())
 	refreshedToken, err := authi.GetToken(userId, util.DefaultPassword)
 
 	assert.Nil(t, err)
