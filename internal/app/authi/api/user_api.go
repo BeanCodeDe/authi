@@ -20,6 +20,11 @@ var (
 	userIdParam = "userId"
 )
 
+const (
+	correlationIdHeader = "X-Correlation-ID"
+	loggerKey           = "logger"
+)
+
 type (
 	UserApi struct {
 		facade core.Facade
@@ -44,7 +49,7 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 	api := &UserApi{userFacade}
 
 	e := echo.New()
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORS(), setLoggerMiddleware)
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	userGroup := e.Group(adapter.AuthiRootPath)
@@ -67,28 +72,31 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 }
 
 func (userApi *UserApi) CreateUserId(context echo.Context) error {
-	log.Debug("Create User Id")
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debug("Create User Id")
 	return context.String(http.StatusCreated, uuid.NewString())
 }
 
 func (userApi *UserApi) CreateUser(context echo.Context) error {
-	log.Debugf("Create User")
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debugf("Create User")
 	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
 		return err
 	}
 
 	if err := userApi.facade.CreateUser(userId, authenticate); err != nil {
-		log.Warnf("Error while creating user: %v", err)
+		logger.Warnf("Error while creating user: %v", err)
 		return echo.ErrUnauthorized
 	}
 
-	log.Debugf("Created user with id %s", userId)
+	logger.Debugf("Created user with id %s", userId)
 	return context.NoContent(http.StatusCreated)
 }
 
 func (userApi *UserApi) LoginUser(context echo.Context) error {
-	log.Debugf("Login some user")
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debugf("Login some user")
 	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
 		return err
@@ -96,20 +104,21 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 
 	token, err := userApi.facade.LoginUser(userId, authenticate)
 	if err != nil {
-		log.Warnf("Error while logging in user %v: %v", userId, err)
+		logger.Warnf("Error while logging in user %v: %v", userId, err)
 		return echo.ErrUnauthorized
 	}
 
-	log.Debugf("Logged in user %s", userId)
+	logger.Debugf("Logged in user %s", userId)
 	return context.JSON(http.StatusOK, token)
 }
 
 func (userApi *UserApi) RefreshToken(context echo.Context) error {
-	log.Debugf("Refresh token")
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debugf("Refresh token")
 
 	userId, err := uuid.Parse(context.Param(userIdParam))
 	if err != nil {
-		log.Warnf("Error while binding userId: %v", err)
+		logger.Warnf("Error while binding userId: %v", err)
 		return echo.ErrBadRequest
 	}
 
@@ -122,15 +131,16 @@ func (userApi *UserApi) RefreshToken(context echo.Context) error {
 
 	token, err := userApi.facade.RefreshToken(userId, refreshToken)
 	if err != nil {
-		log.Errorf("Something went wrong while creating Token: %v", err)
+		logger.Errorf("Something went wrong while creating Token: %v", err)
 		return echo.ErrUnauthorized
 	}
-	log.Debugf("Refresh token for user %s updated", userId)
+	logger.Debugf("Refresh token for user %s updated", userId)
 	return context.JSON(http.StatusOK, token)
 }
 
 func (userApi *UserApi) UpdatePassword(context echo.Context) error {
-	log.Debugf("Update password")
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debugf("Update password")
 
 	userId, authenticate, err := bindAuthenticate(context)
 	if err != nil {
@@ -144,19 +154,20 @@ func (userApi *UserApi) UpdatePassword(context echo.Context) error {
 
 	err = userApi.facade.UpdatePassword(userId, authenticate)
 	if err != nil {
-		log.Errorf("Something went wrong while updating password: %v", err)
+		logger.Errorf("Something went wrong while updating password: %v", err)
 		return echo.ErrUnauthorized
 	}
-	log.Debugf("Password for user %s updated", userId)
+	logger.Debugf("Password for user %s updated", userId)
 	return context.NoContent(http.StatusNoContent)
 }
 
 func (userApi *UserApi) DeleteUser(context echo.Context) error {
-	log.Debugf("Delete password")
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debugf("Delete password")
 
 	userId, err := uuid.Parse(context.Param(userIdParam))
 	if err != nil {
-		log.Warnf("Error while binding userId: %v", err)
+		logger.Warnf("Error while binding userId: %v", err)
 		return echo.ErrBadRequest
 	}
 
@@ -167,9 +178,22 @@ func (userApi *UserApi) DeleteUser(context echo.Context) error {
 
 	err = userApi.facade.DeleteUser(userId)
 	if err != nil {
-		log.Errorf("Something went wrong while deleting user: %v", err)
+		logger.Errorf("Something went wrong while deleting user: %v", err)
 		return echo.ErrUnauthorized
 	}
-	log.Debugf("User %s deleted", userId)
+	logger.Debugf("User %s deleted", userId)
 	return context.NoContent(http.StatusNoContent)
+}
+
+func setLoggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		correlationId := c.Request().Header.Get(correlationIdHeader)
+
+		logger := log.WithFields(log.Fields{
+			correlationIdHeader: correlationId,
+		})
+
+		c.Set(loggerKey, logger)
+		return next(c)
+	}
 }

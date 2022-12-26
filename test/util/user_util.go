@@ -19,11 +19,19 @@ const (
 )
 
 func sendCreateUserIdRequest() *http.Response {
-	resp, err := http.Post(Url+adapter.AuthiRootPath, adapter.ContentTyp, nil)
+	client := &http.Client{}
+
+	req, err := http.NewRequest(http.MethodPost, Url+adapter.AuthiRootPath, nil)
 	if err != nil {
 		panic(err)
 	}
 
+	req.Header.Set(CorrelationId, uuid.NewString())
+	resp, err := client.Do(req)
+
+	if err != nil {
+		panic(err)
+	}
 	return resp
 }
 
@@ -38,6 +46,7 @@ func sendCreateUserRequest(id string, userCreateJson string) *http.Response {
 	}
 
 	req.Header.Set("Content-Type", adapter.ContentTyp)
+	req.Header.Set(CorrelationId, uuid.NewString())
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -58,6 +67,7 @@ func sendRefreshPasswordRequest(userId string, authenticate *Authenticate, token
 	}
 	req.Header.Set("Content-Type", adapter.ContentTyp)
 	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
+	req.Header.Set(CorrelationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -74,6 +84,7 @@ func sendDeleteUserRequest(userId string, token string) *http.Response {
 		panic(err)
 	}
 	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
+	req.Header.Set(CorrelationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

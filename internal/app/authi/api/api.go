@@ -17,21 +17,22 @@ type (
 )
 
 func bindAuthenticate(context echo.Context) (uuid.UUID, *adapter.AuthenticateDTO, error) {
-	log.Debugf("Bind context to auth %v", context)
+	logger := context.Get(loggerKey).(*log.Entry)
+	logger.Debugf("Bind context to auth %v", context)
 	authenticate := new(adapter.AuthenticateDTO)
 	if err := context.Bind(authenticate); err != nil {
-		log.Warnf("Could not bind auth, %v", err)
+		logger.Warnf("Could not bind auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
-	log.Debugf("Auth bind %v", authenticate)
+	logger.Debugf("Auth bind %v", authenticate)
 	if err := context.Validate(authenticate); err != nil {
-		log.Warnf("Could not validate auth, %v", err)
+		logger.Warnf("Could not validate auth, %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
 
 	userId, err := uuid.Parse(context.Param(userIdParam))
 	if err != nil {
-		log.Warnf("Error while binding userId: %v", err)
+		logger.Warnf("Error while binding userId: %v", err)
 		return uuid.Nil, nil, echo.ErrBadRequest
 	}
 
@@ -39,15 +40,16 @@ func bindAuthenticate(context echo.Context) (uuid.UUID, *adapter.AuthenticateDTO
 }
 
 func checkUserId(context echo.Context, userId uuid.UUID) error {
+	logger := context.Get(loggerKey).(*log.Entry)
 	claims, ok := context.Get(adapter.ClaimName).(adapter.Claims)
 
 	if !ok {
-		log.Warnf("Could not map Claims")
+		logger.Warnf("Could not map Claims")
 		return echo.ErrUnauthorized
 	}
 
 	if userId != claims.UserId {
-		log.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
+		logger.Warnf("User %v is not allowed to get token for user %v", userId, claims.UserId)
 		return echo.ErrUnauthorized
 	}
 

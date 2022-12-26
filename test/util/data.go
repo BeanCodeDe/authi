@@ -1,7 +1,8 @@
 package util
 
 const (
-	Url = "http://localhost:1203"
+	Url           = "http://localhost:1203"
+	CorrelationId = "X-Correlation-ID"
 )
 
 type (

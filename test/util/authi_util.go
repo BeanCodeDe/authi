@@ -10,6 +10,7 @@ import (
 
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -36,6 +37,7 @@ func sendLoginRequest(userId string, authenticate *Authenticate) *http.Response 
 		panic(err)
 	}
 	req.Header.Set("Content-Type", adapter.ContentTyp)
+	req.Header.Set(CorrelationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -53,6 +55,7 @@ func sendRefreshTokenRequest(userId string, token string, refreshToken string) *
 	}
 	req.Header.Set(adapter.AuthorizationHeaderName, "Bearer "+token)
 	req.Header.Set(adapter.RefreshTokenHeaderName, refreshToken)
+	req.Header.Set(CorrelationId, uuid.NewString())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
