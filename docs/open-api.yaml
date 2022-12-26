@@ -11,6 +11,13 @@ paths:
       tags:
         - Create User
       summary: Get ID for new user
+      parameters:
+        - in: header
+          name: X-Correlation-ID
+          schema:
+            type: string
+            format: uuid
+          required: true
       responses:
         '201':
           description: |-
@@ -34,6 +41,12 @@ paths:
           schema:
             type: string
             format: UUID
+        - in: header
+          name: X-Correlation-ID
+          schema:
+            type: string
+            format: uuid
+          required: true
       requestBody:
         description: Body with password for user
         required: true
@@ -60,6 +73,12 @@ paths:
           schema:
             type: string
             format: UUID
+        - in: header
+          name: X-Correlation-ID
+          schema:
+            type: string
+            format: uuid
+          required: true
       requestBody:
         description: Body with new password for user
         required: true
@@ -88,6 +107,12 @@ paths:
           schema:
             type: string
             format: UUID
+        - in: header
+          name: X-Correlation-ID
+          schema:
+            type: string
+            format: uuid
+          required: true
       responses:
         '204':
           description: |-
@@ -109,7 +134,13 @@ paths:
           required: true
           schema:
             type: string
-            format: UUID      
+            format: UUID   
+        - in: header
+          name: X-Correlation-ID
+          schema:
+            type: string
+            format: uuid
+          required: true   
       requestBody:
         description: Body with password and id for user
         required: true
@@ -142,6 +173,12 @@ paths:
           name: refresh_token
           schema:
             type: string
+          required: true
+        - in: header
+          name: X-Correlation-ID
+          schema:
+            type: string
+            format: uuid
           required: true
       responses:
         '401':
