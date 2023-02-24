@@ -6,13 +6,6 @@ DOCKER_PATH?=./build/Dockerfile
 version.up:
 	bash ./scripts/auto-increment-version.sh
 
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 172.30.33.1
-  ip_ban_enabled: true
-  login_attempts_threshold: 5
-
 app.build:
 	go mod download
 	go build -o $(APP_NAME) $(SRC_PATH)
