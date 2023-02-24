@@ -6,6 +6,9 @@ DOCKER_PATH?=./build/Dockerfile
 version.up:
 	bash ./scripts/auto-increment-version.sh
 
+init.token:
+	sh ./scripts/generateKeyFile.sh
+
 app.build:
 	go mod download
 	go build -o $(APP_NAME) $(SRC_PATH)
