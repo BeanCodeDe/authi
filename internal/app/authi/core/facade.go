@@ -1,7 +1,7 @@
 package core
 
 import (
-	"math/rand"
+	"crypto/rand"
 
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/google/uuid"
