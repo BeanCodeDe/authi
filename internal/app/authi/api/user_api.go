@@ -110,7 +110,7 @@ func (userApi *UserApi) CreateUser(context echo.Context) error {
 		return err
 	}
 
-	if err := userApi.facade.CreateUser(userId, authenticate); err != nil {
+	if err := userApi.facade.CreateUser(userId, authenticate.Password); err != nil {
 		logger.Warnf("Error while creating user: %v", err)
 		return echo.ErrUnauthorized
 	}
@@ -127,7 +127,7 @@ func (userApi *UserApi) LoginUser(context echo.Context) error {
 		return err
 	}
 
-	token, err := userApi.facade.LoginUser(userId, authenticate)
+	token, err := userApi.facade.LoginUser(userId, authenticate.Password)
 	if err != nil {
 		logger.Warnf("Error while logging in user %v: %v", userId, err)
 		return echo.ErrUnauthorized
@@ -177,7 +177,7 @@ func (userApi *UserApi) UpdatePassword(context echo.Context) error {
 		return err
 	}
 
-	err = userApi.facade.UpdatePassword(userId, authenticate)
+	err = userApi.facade.UpdatePassword(userId, authenticate.Password)
 	if err != nil {
 		logger.Errorf("Something went wrong while updating password: %v", err)
 		return echo.ErrUnauthorized

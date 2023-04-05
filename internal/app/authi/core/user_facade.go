@@ -12,6 +12,8 @@ import (
 	"github.com/BeanCodeDe/authi/pkg/adapter"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/labstack/gommon/log"
+	"gopkg.in/yaml.v3"
 )
 
 type (
@@ -20,6 +22,13 @@ type (
 		signKey                *rsa.PrivateKey
 		accessTokenExpireTime  int
 		refreshTokenExpireTime int
+	}
+	initUser struct {
+		Id       uuid.UUID `yaml:"id" json:"id"`
+		Password string    `yaml:"password" json:"password"`
+	}
+	configYml struct {
+		Users []*initUser `yaml:"users"`
 	}
 )
 
@@ -67,11 +76,41 @@ func loadSignKey() (*rsa.PrivateKey, error) {
 	return signKey, nil
 }
 
-func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error {
+func (userFacade *UserFacade) initDefaultUser() error {
+	initUserFile := util.GetEnvWithFallback("INIT_USER_FILE", "authi.conf")
+
+	_, err := os.Stat(initUserFile)
+
+	if os.IsNotExist(err) {
+		log.Warnf("File %s don't exist", initUserFile)
+		return nil
+	}
+
+	data, err := os.ReadFile(initUserFile)
+	if err != nil {
+		return fmt.Errorf("error while loading init user File [%s]: %v", initUserFile, err)
+	}
+
+	var config *configYml
+
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		return fmt.Errorf("error while parsing init user File [%s]: %v", initUserFile, err)
+	}
+
+	for _, user := range config.Users {
+		if err := userFacade.CreateUser(user.Id, user.Password); err != nil {
+			return fmt.Errorf("error while creating init user [%v]: %v", user.Id, err)
+		}
+	}
+	return nil
+}
+
+func (userFacade *UserFacade) CreateUser(userId uuid.UUID, password string) error {
 
 	creationTime := time.Now()
 
-	dbUser := &db.UserDB{ID: userId, Password: authenticate.Password, CreatedOn: creationTime, LastLogin: creationTime}
+	dbUser := &db.UserDB{ID: userId, Password: password, CreatedOn: creationTime, LastLogin: creationTime}
 
 	if err := userFacade.dbConnection.CreateUser(dbUser, randomString()); err != nil {
 		if errors.Is(err, db.ErrUserAlreadyExists) {
@@ -86,8 +125,8 @@ func (userFacade *UserFacade) CreateUser(userId uuid.UUID, authenticate *adapter
 	return nil
 }
 
-func (userFacade *UserFacade) LoginUser(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) (*adapter.TokenResponseDTO, error) {
-	dbUser := &db.UserDB{ID: userId, Password: authenticate.Password}
+func (userFacade *UserFacade) LoginUser(userId uuid.UUID, password string) (*adapter.TokenResponseDTO, error) {
+	dbUser := &db.UserDB{ID: userId, Password: password}
 	if err := userFacade.dbConnection.LoginUser(dbUser); err != nil {
 		return nil, fmt.Errorf("something went wrong when logging in user, %v: %v", userId, err)
 	}
@@ -102,8 +141,8 @@ func (userFacade *UserFacade) RefreshToken(userId uuid.UUID, refreshToken string
 	return userFacade.createJWTToken(userId)
 }
 
-func (userFacade *UserFacade) UpdatePassword(userId uuid.UUID, authenticate *adapter.AuthenticateDTO) error {
-	if err := userFacade.dbConnection.UpdatePassword(userId, authenticate.Password, randomString()); err != nil {
+func (userFacade *UserFacade) UpdatePassword(userId uuid.UUID, password string) error {
+	if err := userFacade.dbConnection.UpdatePassword(userId, password, randomString()); err != nil {
 		return fmt.Errorf("error while updating password of user: %v", err)
 	}
 	return nil

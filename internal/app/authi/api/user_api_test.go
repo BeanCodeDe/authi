@@ -57,7 +57,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.CreateUserRecordArray[0].UserId)
-	assert.Equal(t, password, facade.CreateUserRecordArray[0].Authenticate.Password)
+	assert.Equal(t, password, facade.CreateUserRecordArray[0].Password)
 
 }
 
@@ -85,7 +85,7 @@ func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.CreateUserRecordArray[0].UserId)
-	assert.Equal(t, password, facade.CreateUserRecordArray[0].Authenticate.Password)
+	assert.Equal(t, password, facade.CreateUserRecordArray[0].Password)
 }
 
 // LoginUser Tests
@@ -116,7 +116,7 @@ func TestLoginUser_Successfully(t *testing.T) {
 	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.LoginUserRecordArray[0].UserId)
-	assert.Equal(t, password, facade.LoginUserRecordArray[0].Authenticate.Password)
+	assert.Equal(t, password, facade.LoginUserRecordArray[0].Password)
 	assert.Equal(t, "{\"access_token\":\"some_access_token\",\"expires_in\":1,\"refresh_token\":\"some_refresh_token\",\"refresh_expires_in\":2}\n", rec.Body.String())
 
 }
@@ -146,7 +146,7 @@ func TestLoginUser__LoginUser_ErrUnauthorized(t *testing.T) {
 	assert.Equal(t, 0, len(facade.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.LoginUserRecordArray[0].UserId)
-	assert.Equal(t, password, facade.LoginUserRecordArray[0].Authenticate.Password)
+	assert.Equal(t, password, facade.LoginUserRecordArray[0].Password)
 
 }
 
@@ -238,7 +238,7 @@ func TestUpdatePassword_Successfully(t *testing.T) {
 	assert.Equal(t, 1, len(facade.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.UpdatePasswordRecordArray[0].UserId)
-	assert.Equal(t, password, facade.UpdatePasswordRecordArray[0].Authenticate.Password)
+	assert.Equal(t, password, facade.UpdatePasswordRecordArray[0].Password)
 
 }
 
@@ -267,7 +267,7 @@ func TestUpdatePassword_UpdatePassword_ErrUnauthorized(t *testing.T) {
 	assert.Equal(t, 1, len(facade.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.UpdatePasswordRecordArray[0].UserId)
-	assert.Equal(t, password, facade.UpdatePasswordRecordArray[0].Authenticate.Password)
+	assert.Equal(t, password, facade.UpdatePasswordRecordArray[0].Password)
 }
 
 // Delete User Test
