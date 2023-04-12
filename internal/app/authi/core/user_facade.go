@@ -36,6 +36,7 @@ const (
 	EnvPrivateKeyPath         = "PRIVATE_KEY_PATH"
 	EnvAccessTokenExpireTime  = "ACCESS_TOKEN_EXPIRE_TIME"
 	EnvRefreshTokenExpireTime = "REFRESH_TOKEN_EXPIRE_TIME"
+	EnvInitUserFile           = "INIT_USER_FILE"
 )
 
 func NewUserFacade() (*UserFacade, error) {
@@ -77,7 +78,7 @@ func loadSignKey() (*rsa.PrivateKey, error) {
 }
 
 func (userFacade *UserFacade) initDefaultUser() error {
-	initUserFile := util.GetEnvWithFallback("INIT_USER_FILE", "authi.conf")
+	initUserFile := util.GetEnvWithFallback(EnvInitUserFile, "authi.conf")
 
 	_, err := os.Stat(initUserFile)
 
@@ -98,19 +99,20 @@ func (userFacade *UserFacade) initDefaultUser() error {
 		return fmt.Errorf("error while parsing init user File [%s]: %v", initUserFile, err)
 	}
 
+	userFacade.dbConnection.DeleteInitUsers()
 	for _, user := range config.Users {
-		if err := userFacade.CreateUser(user.Id, user.Password); err != nil {
+		if err := userFacade.CreateUser(user.Id, user.Password, true); err != nil {
 			return fmt.Errorf("error while creating init user [%v]: %v", user.Id, err)
 		}
 	}
 	return nil
 }
 
-func (userFacade *UserFacade) CreateUser(userId uuid.UUID, password string) error {
+func (userFacade *UserFacade) CreateUser(userId uuid.UUID, password string, initUser bool) error {
 
 	creationTime := time.Now()
 
-	dbUser := &db.UserDB{ID: userId, Password: password, CreatedOn: creationTime, LastLogin: creationTime}
+	dbUser := &db.UserDB{ID: userId, Password: password, CreatedOn: creationTime, LastLogin: creationTime, InitUser: initUser}
 
 	if err := userFacade.dbConnection.CreateUser(dbUser, randomString()); err != nil {
 		if errors.Is(err, db.ErrUserAlreadyExists) {

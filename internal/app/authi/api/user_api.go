@@ -110,7 +110,7 @@ func (userApi *UserApi) CreateUser(context echo.Context) error {
 		return err
 	}
 
-	if err := userApi.facade.CreateUser(userId, authenticate.Password); err != nil {
+	if err := userApi.facade.CreateUser(userId, authenticate.Password, false); err != nil {
 		logger.Warnf("Error while creating user: %v", err)
 		return echo.ErrUnauthorized
 	}

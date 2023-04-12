@@ -84,7 +84,7 @@ func migratePostgresDatabase(url string) error {
 }
 
 func (connection *postgresConnection) CreateUser(user *UserDB, hash string) error {
-	if _, err := connection.dbPool.Exec(context.Background(), "INSERT INTO auth.user(id, password,salt,created_on,last_login) VALUES($1,MD5($2),$3,$4,$5)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin); err != nil {
+	if _, err := connection.dbPool.Exec(context.Background(), "INSERT INTO auth.user(id, password,salt,created_on,last_login, init_user) VALUES($1,MD5($2),$3,$4,$5,$6)", user.ID, user.Password+hash, hash, user.CreatedOn, user.LastLogin, user.InitUser); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
@@ -168,6 +168,13 @@ func (connection *postgresConnection) UpdatePassword(userId uuid.UUID, password 
 func (connection *postgresConnection) DeleteUser(userId uuid.UUID) error {
 	if _, err := connection.dbPool.Exec(context.Background(), "DELETE FROM auth.user WHERE id=$1", userId); err != nil {
 		return fmt.Errorf("unknown error when deleting user %s error: %v", userId, err)
+	}
+	return nil
+}
+
+func (connection *postgresConnection) DeleteInitUsers() error {
+	if _, err := connection.dbPool.Exec(context.Background(), "DELETE FROM auth.user WHERE init_user=TRUE"); err != nil {
+		return fmt.Errorf("unknown error when deleting init users: %v", err)
 	}
 	return nil
 }

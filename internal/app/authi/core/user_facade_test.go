@@ -14,7 +14,7 @@ func TestInitUser_YamlSuccessfully(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	os.Setenv("INIT_USER_FILE", "user_test.yml")
+	os.Setenv(EnvInitUserFile, "user_test.yml")
 	err := userFacade.initDefaultUser()
 
 	assert.Nil(t, err)
@@ -41,7 +41,7 @@ func TestInitUser_JsonSuccessfully(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	os.Setenv("INIT_USER_FILE", "user_test.json")
+	os.Setenv(EnvInitUserFile, "user_test.json")
 	err := userFacade.initDefaultUser()
 
 	assert.Nil(t, err)
@@ -68,7 +68,7 @@ func TestInitUser_FileNotFound(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	os.Setenv("INIT_USER_FILE", "some_random_file.yml")
+	os.Setenv(EnvInitUserFile, "some_random_file.yml")
 	err := userFacade.initDefaultUser()
 
 	assert.Nil(t, err)
@@ -85,7 +85,7 @@ func TestInitUser_NotPasable(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	os.Setenv("INIT_USER_FILE", "user_test_wrong_fornat.yml")
+	os.Setenv(EnvInitUserFile, "user_test_wrong_fornat.yml")
 	err := userFacade.initDefaultUser()
 
 	assert.NotNil(t, err)
@@ -104,7 +104,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, password)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -116,6 +116,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 
 	assert.NotNil(t, dbConnection.CreateUserRecordArray[0].User)
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Equal(t, authenticate.Password, dbConnection.CreateUserRecordArray[0].User.Password)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 
@@ -125,7 +126,7 @@ func TestCreateUser_CreateUser_UnknownError(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, password)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -136,6 +137,7 @@ func TestCreateUser_CreateUser_UnknownError(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 }
 
@@ -143,7 +145,7 @@ func TestCreateUser_CreateUser_AlreadyExistsWrongPassword(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: db.ErrUserAlreadyExists}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, password)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -154,6 +156,7 @@ func TestCreateUser_CreateUser_AlreadyExistsWrongPassword(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Equal(t, password, dbConnection.CreateUserRecordArray[0].User.Password)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 
@@ -165,7 +168,7 @@ func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: db.ErrUserAlreadyExists}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, password)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -176,6 +179,7 @@ func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Equal(t, password, dbConnection.CreateUserRecordArray[0].User.Password)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 

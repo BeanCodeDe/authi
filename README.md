@@ -98,6 +98,7 @@ The application can be started with different environment variables to configure
 | POSTGRES_OPTIONS             | Connection options of Postgres database                               | :x:                | sslmode=disable         |
 | ACCESS_TOKEN_EXPIRE_TIME     | Time in minutes till an access token is no longer valid               | :x:                | 5                       |
 | REFRESH_TOKEN_EXPIRE_TIME    | Time in minutes till an refresh token is no longer valid              | :x:                | 10                      |
+| INIT_USER_FILE               | Path to the file with initial user                                    | :x:                | authi.conf              |
 
 ---
 
@@ -214,3 +215,36 @@ While using the middleware the following errors could occur:
 | ErrWhileParsingKey       | Key file couldn't be parsed                   | Maybe the file has not the correct format. Use the commands from `Execute the following two commands to generate key's` to generate key files |
 
 ---
+
+## Init user configuration
+To create users that are available immediately after starting the application, an init user config can be created. The default name of the file is `authi.conf` and must be right next to the application. If a different file path is desired, this can be adjusted via the environment variable `INIT_USER_FILE`.
+The startup process deletes all initial users and then creates the users from the file. Thus only the users with the most recent data from the file should remain as initial users.
+
+The configuration file can be written in JSON or YAML. Mandatory fields are the ID of the user, which must be in uuid V4 format, and the user's password.
+Below are two example configurations in YAML and JSON:
+
+```JSON
+{
+    "users":[
+        {
+            "id": "c5ffc340-507e-4c66-a6ce-a7d98842f9ba",
+            "password":"someSecretPassword"
+        },
+        {
+            "id":"5cc3621d-e5ac-4d81-93df-462b27e0cc2b",
+            "password":"someOtherPassword"
+        }
+    ]
+}
+```
+
+
+```YAML
+users:
+    -   
+        id: c5ffc340-507e-4c66-a6ce-a7d98842f9ba
+        password: someSecretPassword
+    - 
+        id: 5cc3621d-e5ac-4d81-93df-462b27e0cc2b
+        password: someOtherPassword
+```

@@ -9,7 +9,7 @@ import (
 
 type (
 	Facade interface {
-		CreateUser(userId uuid.UUID, password string) error
+		CreateUser(userId uuid.UUID, password string, initUser bool) error
 		LoginUser(userId uuid.UUID, password string) (*adapter.TokenResponseDTO, error)
 		RefreshToken(userId uuid.UUID, refreshToken string) (*adapter.TokenResponseDTO, error)
 		UpdatePassword(userId uuid.UUID, password string) error

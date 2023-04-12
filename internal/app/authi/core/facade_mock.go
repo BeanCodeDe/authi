@@ -6,9 +6,13 @@ import (
 )
 
 type (
+	EmptyRecord struct {
+	}
+
 	AuthenticateRecord struct {
 		UserId   uuid.UUID
 		Password string
+		InitUser bool
 	}
 
 	RefreshTokenRecord struct {
@@ -29,21 +33,23 @@ type (
 	}
 
 	CoreMock struct {
-		CreateUserRecordArray       []*AuthenticateRecord
-		LoginUserRecordArray        []*AuthenticateRecord
-		RefreshTokenRecordArray     []*RefreshTokenRecord
-		UpdatePasswordRecordArray   []*AuthenticateRecord
-		DeleteUserRecordArray       []*DeleteUserRecord
-		CreateUserResponseArray     []*ErrorResponse
-		LoginUserResponseArray      []*AuthenticateResponse
-		RefreshTokenResponseArray   []*AuthenticateResponse
-		UpdatePasswordResponseArray []*ErrorResponse
-		DeleteUserResponseArray     []*ErrorResponse
+		CreateUserRecordArray        []*AuthenticateRecord
+		LoginUserRecordArray         []*AuthenticateRecord
+		RefreshTokenRecordArray      []*RefreshTokenRecord
+		UpdatePasswordRecordArray    []*AuthenticateRecord
+		DeleteUserRecordArray        []*DeleteUserRecord
+		DeleteInitUsersRecordArray   []*EmptyRecord
+		CreateUserResponseArray      []*ErrorResponse
+		LoginUserResponseArray       []*AuthenticateResponse
+		RefreshTokenResponseArray    []*AuthenticateResponse
+		UpdatePasswordResponseArray  []*ErrorResponse
+		DeleteUserResponseArray      []*ErrorResponse
+		DeleteInitUsersResponseArray []*ErrorResponse
 	}
 )
 
-func (mock *CoreMock) CreateUser(userId uuid.UUID, password string) error {
-	record := &AuthenticateRecord{UserId: userId, Password: password}
+func (mock *CoreMock) CreateUser(userId uuid.UUID, password string, initUser bool) error {
+	record := &AuthenticateRecord{UserId: userId, Password: password, InitUser: initUser}
 	mock.CreateUserRecordArray = append(mock.CreateUserRecordArray, record)
 	response := mock.CreateUserResponseArray[len(mock.CreateUserRecordArray)-1]
 	return response.Err
@@ -74,5 +80,12 @@ func (mock *CoreMock) DeleteUser(userId uuid.UUID) error {
 	record := &DeleteUserRecord{UserId: userId}
 	mock.DeleteUserRecordArray = append(mock.DeleteUserRecordArray, record)
 	response := mock.DeleteUserResponseArray[len(mock.DeleteUserRecordArray)-1]
+	return response.Err
+}
+
+func (mock *CoreMock) DeleteInitUsers() error {
+	record := &EmptyRecord{}
+	mock.DeleteInitUsersRecordArray = append(mock.DeleteInitUsersRecordArray, record)
+	response := mock.DeleteInitUsersResponseArray[len(mock.DeleteInitUsersRecordArray)-1]
 	return response.Err
 }

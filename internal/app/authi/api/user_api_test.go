@@ -58,6 +58,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.CreateUserRecordArray[0].UserId)
 	assert.Equal(t, password, facade.CreateUserRecordArray[0].Password)
+	assert.Equal(t, false, facade.CreateUserRecordArray[0].InitUser)
 
 }
 
@@ -86,6 +87,7 @@ func TestCreateUser_CreateUser_InternalServerError(t *testing.T) {
 	assert.Equal(t, 0, len(facade.DeleteUserRecordArray))
 	assert.Equal(t, userId, facade.CreateUserRecordArray[0].UserId)
 	assert.Equal(t, password, facade.CreateUserRecordArray[0].Password)
+	assert.Equal(t, false, facade.CreateUserRecordArray[0].InitUser)
 }
 
 // LoginUser Tests
