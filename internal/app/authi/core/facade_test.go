@@ -14,7 +14,7 @@ var (
 	refreshToken   = "someRefreshToken"
 	password       = "some password"
 	authenticate   = &adapter.AuthenticateDTO{Password: password}
-	privateKeyPath = "../../../../deployments/token/jwtRS256.key"
+	privateKeyPath = "../../../../deployments/data/token/jwtRS256.key"
 	errUnknown     = errors.New("some error")
 )
 

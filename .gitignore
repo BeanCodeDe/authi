@@ -12,7 +12,8 @@
 *.out
 
 # tokens
-deployments/token
+deployments/data/token/jwtRS256.key
+deployments/data/token/jwtRS256.key.pub
 
 #VSCode
 .vscode

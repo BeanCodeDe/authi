@@ -1,6 +1,7 @@
 package core
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -8,13 +9,106 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// InitUser Test
+func TestInitUser_YamlSuccessfully(t *testing.T) {
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}, DeleteInitUsersResponseArray: []*db.ErrorResponse{{Err: nil}}}
+	userFacade := &UserFacade{dbConnection: dbConnection}
+
+	os.Setenv(EnvInitUserFile, "user_test.yml")
+	err := userFacade.initDefaultUser()
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
+	assert.Equal(t, 2, len(dbConnection.CreateUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdateRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.LoginUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 1, len(dbConnection.DeleteInitUsersRecordArray))
+
+	assert.NotNil(t, dbConnection.CreateUserRecordArray[0].User)
+	assert.Equal(t, "c5ffc340-507e-4c66-a6ce-a7d98842f9ba", dbConnection.CreateUserRecordArray[0].User.ID.String())
+	assert.Equal(t, "someSecretPassword", dbConnection.CreateUserRecordArray[0].User.Password)
+	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
+
+	assert.NotNil(t, dbConnection.CreateUserRecordArray[1].User)
+	assert.Equal(t, "5cc3621d-e5ac-4d81-93df-462b27e0cc2b", dbConnection.CreateUserRecordArray[1].User.ID.String())
+	assert.Equal(t, "someOtherPassword", dbConnection.CreateUserRecordArray[1].User.Password)
+	assert.Len(t, dbConnection.CreateUserRecordArray[1].Hash, 32)
+}
+
+func TestInitUser_JsonSuccessfully(t *testing.T) {
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}, DeleteInitUsersResponseArray: []*db.ErrorResponse{{Err: nil}}}
+	userFacade := &UserFacade{dbConnection: dbConnection}
+
+	os.Setenv(EnvInitUserFile, "user_test.json")
+	err := userFacade.initDefaultUser()
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
+	assert.Equal(t, 2, len(dbConnection.CreateUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdateRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.LoginUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 1, len(dbConnection.DeleteInitUsersRecordArray))
+
+	assert.NotNil(t, dbConnection.CreateUserRecordArray[0].User)
+	assert.Equal(t, "c5ffc340-507e-4c66-a6ce-a7d98842f9ba", dbConnection.CreateUserRecordArray[0].User.ID.String())
+	assert.Equal(t, "someSecretPassword", dbConnection.CreateUserRecordArray[0].User.Password)
+	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
+
+	assert.NotNil(t, dbConnection.CreateUserRecordArray[1].User)
+	assert.Equal(t, "5cc3621d-e5ac-4d81-93df-462b27e0cc2b", dbConnection.CreateUserRecordArray[1].User.ID.String())
+	assert.Equal(t, "someOtherPassword", dbConnection.CreateUserRecordArray[1].User.Password)
+	assert.Len(t, dbConnection.CreateUserRecordArray[1].Hash, 32)
+}
+
+func TestInitUser_FileNotFound(t *testing.T) {
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
+	userFacade := &UserFacade{dbConnection: dbConnection}
+
+	os.Setenv(EnvInitUserFile, "some_random_file.yml")
+	err := userFacade.initDefaultUser()
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
+	assert.Equal(t, 0, len(dbConnection.CreateUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdateRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.LoginUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteInitUsersRecordArray))
+}
+
+func TestInitUser_NotPasable(t *testing.T) {
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
+	userFacade := &UserFacade{dbConnection: dbConnection}
+
+	os.Setenv(EnvInitUserFile, "user_test_wrong_fornat.yml")
+	err := userFacade.initDefaultUser()
+
+	assert.NotNil(t, err)
+	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
+	assert.Equal(t, 0, len(dbConnection.CreateUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdateRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.LoginUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
+	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteInitUsersRecordArray))
+}
+
 // CreateUser Test
 
 func TestCreateUser_Successfully(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, authenticate)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -26,6 +120,7 @@ func TestCreateUser_Successfully(t *testing.T) {
 
 	assert.NotNil(t, dbConnection.CreateUserRecordArray[0].User)
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Equal(t, authenticate.Password, dbConnection.CreateUserRecordArray[0].User.Password)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 
@@ -35,7 +130,7 @@ func TestCreateUser_CreateUser_UnknownError(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, authenticate)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -46,6 +141,7 @@ func TestCreateUser_CreateUser_UnknownError(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 }
 
@@ -53,7 +149,7 @@ func TestCreateUser_CreateUser_AlreadyExistsWrongPassword(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: db.ErrUserAlreadyExists}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, authenticate)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -64,6 +160,7 @@ func TestCreateUser_CreateUser_AlreadyExistsWrongPassword(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Equal(t, password, dbConnection.CreateUserRecordArray[0].User.Password)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 
@@ -75,7 +172,7 @@ func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
 	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: db.ErrUserAlreadyExists}}, LoginUserResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.CreateUser(userId, authenticate)
+	err := userFacade.CreateUser(userId, password, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 1, len(dbConnection.CreateUserRecordArray))
@@ -86,6 +183,7 @@ func TestCreateUser_CreateUser_AlreadyExistsRetry(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
 
 	assert.Equal(t, userId, dbConnection.CreateUserRecordArray[0].User.ID)
+	assert.Equal(t, false, dbConnection.CreateUserRecordArray[0].User.InitUser)
 	assert.Equal(t, password, dbConnection.CreateUserRecordArray[0].User.Password)
 	assert.Len(t, dbConnection.CreateUserRecordArray[0].Hash, 32)
 
@@ -185,7 +283,7 @@ func TestLoginUser_Successfully(t *testing.T) {
 	assert.Nil(t, err)
 	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey, accessTokenExpireTime: 5, refreshTokenExpireTime: 10}
 
-	tokenResponseDTO, err := userFacade.LoginUser(userId, authenticate)
+	tokenResponseDTO, err := userFacade.LoginUser(userId, password)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 0, len(dbConnection.CreateUserRecordArray))
@@ -218,7 +316,7 @@ func TestLoginUser_LoginUser_UnknownError(t *testing.T) {
 	assert.Nil(t, err)
 	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey}
 
-	tokenResponseDTO, err := userFacade.LoginUser(userId, authenticate)
+	tokenResponseDTO, err := userFacade.LoginUser(userId, password)
 	assert.NotNil(t, err)
 	assert.Nil(t, tokenResponseDTO)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
@@ -242,7 +340,7 @@ func TestLoginUser_UpdateRefreshToken_UnknownError(t *testing.T) {
 	assert.Nil(t, err)
 	userFacade := &UserFacade{dbConnection: dbConnection, signKey: signKey, accessTokenExpireTime: 5, refreshTokenExpireTime: 10}
 
-	tokenResponseDTO, err := userFacade.LoginUser(userId, authenticate)
+	tokenResponseDTO, err := userFacade.LoginUser(userId, password)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
 	assert.Equal(t, 0, len(dbConnection.CreateUserRecordArray))
 	assert.Equal(t, 1, len(dbConnection.UpdateRefreshTokenRecordArray))
@@ -268,7 +366,7 @@ func TestUpdatePassword_Successfully(t *testing.T) {
 	dbConnection := &db.DBMock{UpdatePasswordResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.UpdatePassword(userId, authenticate)
+	err := userFacade.UpdatePassword(userId, password)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))
@@ -288,7 +386,7 @@ func TestUpdatePassword_UnknownError(t *testing.T) {
 	dbConnection := &db.DBMock{UpdatePasswordResponseArray: []*db.ErrorResponse{{Err: errUnknown}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
-	err := userFacade.UpdatePassword(userId, authenticate)
+	err := userFacade.UpdatePassword(userId, password)
 
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(dbConnection.CloseRecordArray))

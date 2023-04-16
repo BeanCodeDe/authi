@@ -15,6 +15,7 @@ type (
 		Password  string    `db:"password"`
 		CreatedOn time.Time `db:"created_on"`
 		LastLogin time.Time `db:"last_login"`
+		InitUser  bool      `db:"init_user"`
 	}
 	Connection interface {
 		Close()
@@ -24,6 +25,7 @@ type (
 		CheckRefreshToken(userId uuid.UUID, refreshToken string) error
 		UpdatePassword(userId uuid.UUID, password string, hash string) error
 		DeleteUser(userId uuid.UUID) error
+		DeleteInitUsers() error
 	}
 )
 

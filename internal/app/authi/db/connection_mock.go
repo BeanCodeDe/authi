@@ -15,12 +15,14 @@ type (
 		CheckRefreshTokenRecordArray    []*CheckRefreshTokenRecord
 		UpdatePasswordRecordArray       []*UpdatePasswordRecord
 		DeleteUserRecordArray           []*DeleteUserRecord
+		DeleteInitUsersRecordArray      []*CloseRecord
 		CreateUserResponseArray         []*ErrorResponse
 		UpdateRefreshTokenResponseArray []*ErrorResponse
 		LoginUserResponseArray          []*ErrorResponse
 		CheckRefreshTokenResponseArray  []*ErrorResponse
 		UpdatePasswordResponseArray     []*ErrorResponse
 		DeleteUserResponseArray         []*ErrorResponse
+		DeleteInitUsersResponseArray    []*ErrorResponse
 	}
 
 	ErrorResponse struct {
@@ -103,5 +105,12 @@ func (mock *DBMock) DeleteUser(userId uuid.UUID) error {
 	record := &DeleteUserRecord{UserId: userId}
 	mock.DeleteUserRecordArray = append(mock.DeleteUserRecordArray, record)
 	response := mock.DeleteUserResponseArray[len(mock.DeleteUserRecordArray)-1]
+	return response.Err
+}
+
+func (mock *DBMock) DeleteInitUsers() error {
+	record := &CloseRecord{}
+	mock.DeleteInitUsersRecordArray = append(mock.DeleteInitUsersRecordArray, record)
+	response := mock.DeleteInitUsersResponseArray[len(mock.DeleteInitUsersRecordArray)-1]
 	return response.Err
 }
