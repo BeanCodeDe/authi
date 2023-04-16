@@ -58,7 +58,9 @@ func NewUserFacade() (*UserFacade, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error loading refresh token expire time from environment: %w", err)
 	}
-	return &UserFacade{dbConnection, signKey, accessTokenExpireTime, refreshTokenExpireTime}, nil
+	userFacade := &UserFacade{dbConnection, signKey, accessTokenExpireTime, refreshTokenExpireTime}
+	userFacade.initDefaultUser()
+	return userFacade, nil
 }
 
 func loadSignKey() (*rsa.PrivateKey, error) {
@@ -78,7 +80,7 @@ func loadSignKey() (*rsa.PrivateKey, error) {
 }
 
 func (userFacade *UserFacade) initDefaultUser() error {
-	initUserFile := util.GetEnvWithFallback(EnvInitUserFile, "authi.conf")
+	initUserFile := util.GetEnvWithFallback(EnvInitUserFile, "/authi.conf")
 
 	_, err := os.Stat(initUserFile)
 

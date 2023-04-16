@@ -23,7 +23,8 @@ services:
     ports:
       - 1203:1203
     volumes: 
-      - ./token:/token
+      - ./data/token:/token
+      - ./data/authi.conf:/authi.conf
     depends_on:
       postgres:
         condition: service_healthy

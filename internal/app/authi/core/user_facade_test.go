@@ -11,7 +11,7 @@ import (
 
 // InitUser Test
 func TestInitUser_YamlSuccessfully(t *testing.T) {
-	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}, DeleteInitUsersResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	os.Setenv(EnvInitUserFile, "user_test.yml")
@@ -25,6 +25,7 @@ func TestInitUser_YamlSuccessfully(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
 	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 1, len(dbConnection.DeleteInitUsersRecordArray))
 
 	assert.NotNil(t, dbConnection.CreateUserRecordArray[0].User)
 	assert.Equal(t, "c5ffc340-507e-4c66-a6ce-a7d98842f9ba", dbConnection.CreateUserRecordArray[0].User.ID.String())
@@ -38,7 +39,7 @@ func TestInitUser_YamlSuccessfully(t *testing.T) {
 }
 
 func TestInitUser_JsonSuccessfully(t *testing.T) {
-	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}}
+	dbConnection := &db.DBMock{CreateUserResponseArray: []*db.ErrorResponse{{Err: nil}, {Err: nil}}, DeleteInitUsersResponseArray: []*db.ErrorResponse{{Err: nil}}}
 	userFacade := &UserFacade{dbConnection: dbConnection}
 
 	os.Setenv(EnvInitUserFile, "user_test.json")
@@ -52,6 +53,7 @@ func TestInitUser_JsonSuccessfully(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
 	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 1, len(dbConnection.DeleteInitUsersRecordArray))
 
 	assert.NotNil(t, dbConnection.CreateUserRecordArray[0].User)
 	assert.Equal(t, "c5ffc340-507e-4c66-a6ce-a7d98842f9ba", dbConnection.CreateUserRecordArray[0].User.ID.String())
@@ -79,6 +81,7 @@ func TestInitUser_FileNotFound(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
 	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteInitUsersRecordArray))
 }
 
 func TestInitUser_NotPasable(t *testing.T) {
@@ -96,6 +99,7 @@ func TestInitUser_NotPasable(t *testing.T) {
 	assert.Equal(t, 0, len(dbConnection.CheckRefreshTokenRecordArray))
 	assert.Equal(t, 0, len(dbConnection.UpdatePasswordRecordArray))
 	assert.Equal(t, 0, len(dbConnection.DeleteUserRecordArray))
+	assert.Equal(t, 0, len(dbConnection.DeleteInitUsersRecordArray))
 }
 
 // CreateUser Test
