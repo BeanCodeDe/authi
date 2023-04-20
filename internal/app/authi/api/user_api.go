@@ -50,6 +50,10 @@ func NewUserApi(parser parser.Parser) (*UserApi, error) {
 	api := &UserApi{userFacade}
 
 	e := echo.New()
+	e.HideBanner = true
+	if log.GetLevel() < log.InfoLevel {
+		e.HidePort = true
+	}
 	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 	e.Use(middleware.CORS(), setLoggerMiddleware, middleware.Recover())
 
