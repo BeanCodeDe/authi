@@ -17,3 +17,4 @@ deployments/data/token/jwtRS256.key.pub
 
 #VSCode
 .vscode
+.DS_Store
