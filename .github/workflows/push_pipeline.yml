@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
-          with:
+        with:
           go-version: 1.22.2
 
       - name: Init project
