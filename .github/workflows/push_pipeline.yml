@@ -13,7 +13,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.21.1
+        go-version: 1.22.2
 
     - name: Verify dependencies
       run: go mod verify
@@ -45,7 +45,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
+          with:
+          go-version: 1.22.2
 
       - name: Init project
         run: make init.token
